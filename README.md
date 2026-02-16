@@ -6,7 +6,7 @@
 I like Dr. Andrew Heiss’
 [idea](https://github.com/andrewheiss/testy-turtle) for a project name.
 So I set the seed at `260216` (the day I opened the repository), and it
-produces a codename “Icky Impala”.
+produces a codename “Spruce Shark”.
 
 ``` r
 library(codename)
