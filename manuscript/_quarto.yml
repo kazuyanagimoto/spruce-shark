@@ -21,5 +21,9 @@ format:
   pdf:
     documentclass: scrreprt
 
-
+execute:
+  freeze: auto
+  echo: false
+  message: false
+  warning: false
 

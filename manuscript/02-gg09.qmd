@@ -1,5 +1,20 @@
 # Continuos-time Marriage Model
 
+```{r}
+#| label: setup-gg09
+library(tinytable)
+options(tinytable_html_mathjax = TRUE)
+
+targets::tar_config_set(
+  store = here::here("_targets"),
+  script = here::here("_targets.R")
+)
+
+targets::tar_load(c(
+  gg09
+))
+```
+
 To develop a continuous-time search and matching model of marriage, I build on the canonical framework of @greenwood2009. I begin by presenting their discrete-time formulation and then extend it to continuous time.
 
 ## Discrete-time Model
@@ -33,12 +48,12 @@ Single households meet potential partners with match quality $b$ drawn from a no
 
 $$
 b \sim \mathcal{N}(\mu_s, \sigma_s^2),
-$$
+$${#eq-dist-match-single}
 
 where $\mu_s$ and $\sigma_s^2$ are the mean and variance of the match quality of singles. The cumulative distribution function of the match quality of singles is denoted by $F(b)$. The match quality of married households evolves according to an AR(1) process:
 
 $$
-b = (1-\rho)\mu_m + \rho b_{-1} + \sigma_{m}\sqrt{1-\rho^2}\xi, \quad \xi \sim \mathcal{N}(0, 1).
+b = (1-\varrho)\mu_m + \varrho b_{-1} + \sigma_{m}\sqrt{1-\varrho^2}\xi, \quad \xi \sim \mathcal{N}(0, 1).
 $$
 
 The cumulative distribution function of the match quality of married households is denoted by $G(b'|b)$.
@@ -54,7 +69,7 @@ V^S &= v(p, w, 1) + \beta \int_{\mathcal{B}} \max\{V^M(b), V^S\} \,dF(b).
 \end{aligned}
 $${#eq-bellman-dt}
 
-The household chooses to marry if $V^M(b) \geq V^S$ and remains single otherwise. Married households choose to divorce if $V^M(b) < V^S$ and remain married otherwise.
+The effective discount rate $\beta := \tilde{\beta} (1 - \delta)$ is the product of the discount factor $\tilde{\beta}$ and the survival probability $1 - \delta$. The household chooses to marry if $V^M(b) \geq V^S$ and remains single otherwise. Married households choose to divorce if $V^M(b) < V^S$ and remain married otherwise.
 
 **Stational Distribution**
 
@@ -81,4 +96,121 @@ To close the model, the production side is defined as a linear technlogy, $y = w
 
 ## Continuous-time Model
 
+Consider a continuous-time version of the model. While the household allocation are the same as in the discrete-time model, the timing of events is different. In continuous time, households exit the economy with a constant hazard rate $\nu$, and new households enter the economy as singles with the same hazard rate $\nu$. Each single household meets potential partners with a Poisson arrival rate $\lambda$, and the match quality is drawn from the same distribution as in the discrete-time model. The match quality of married households evolves according to an Orenstein-Uhlenbeck (OU) process. The value functions satisfy Hamilton-Jacobi-Bellman (HJB) equations, and the stationary distribution is the solution to the Kolmogorov Forward (KF) equation.
 
+**Match Quality**
+
+Single households meet potential partners with Poisson arrival rate $\lambda$, and the match quality $b_t$ is drawn from a normal distribution @eq-dist-match-single, of which CDF and PDF is $F(b)$ and $f(b)$. The match quality of married households evolves according to an OU process:
+
+$$
+d b_t = \eta(\mu_m - b_t) dt + \sigma_{m} dW_t,
+$$
+
+where $W_t$ is a standard Brownian motion.
+
+**Value Functions**
+
+Let $V^M(b)$ and $V^S$ be the value functions of married and single households. Single households choose to marry if $V^M(b) \geq V^S$ and remain single otherwise. Married households choose to divorce if $V^M(b) < V^S$ and remain married otherwise. This implies the following variation inequality:
+
+$$
+V^M(b) \geq V^S \quad \text{for all }b \in \mathcal{B},
+$$
+
+which define an endogenous marriage/divorce threshold:
+
+$$
+b^* = \inf\{b \in \mathcal{B} : V^M(b) \geq V^S\}.
+$$
+
+The value functions satisfy the following HJB equations:
+
+$$
+\begin{aligned}
+\rho V^S &= v(p, w, 1) + \lambda \int_{b^*}^{\infty} V^M(b') - V^S \,dF(b'), \\
+\rho V^M(b) &= v(p, w, 2) + b + \eta(\mu_m - b) \frac{\partial V^M(b)}{\partial b} + \frac{1}{2}\sigma_m^2 \frac{\partial^2 V^M(b)}{\partial b^2}.
+\end{aligned}
+$${#eq-hjb}
+
+The effective discount rate $\rho$ is the sum of the discount rate and the exit rate, $\rho = \tilde{\rho} + \nu$.
+
+
+**Stationary Distribution**
+
+The stationary distribution is the solution to the Kolmogorov Forward equation, which is given by
+
+$$
+0 = -\frac{\partial}{\partial b}\left[\eta(\mu_m - b)\mu(b)\right] + \frac{1}{2}\sigma_m^2 \frac{\partial^2 \mu(b)}{\partial b^2} + \lambda s f(b) - \nu \mu(b) \quad \text{for } b > b^*,
+$${#eq-kf}
+
+where $\mu(b)$ is the density of married households with match quality $b$, and $s$ is the mass of single households,
+
+$$
+s = 1 - \int_{b^*}^{\infty} \mu(b) \, db.
+$${#eq-population-ct}
+
+**Equilibrium**
+
+A stationary equilibrium is a tuple $\{V^M(b), V^S, s, \mu(b)\}$ such that
+
+1. $V^M(b)$ and $V^S$ satisfy @eq-hjb
+1. $s$ and $\mu(b)$ is a stationary distribution that satisfies @eq-kf with @eq-population-ct for all $b > b^*$.
+
+## Estimation
+
+```{r}
+#| label: tbl-gg09-params
+#| tbl-cap: "**Parameter Values**."
+data.frame(
+  Parameter = c(
+    "$\\phi$",
+    "$\\alpha$",
+    "$\\zeta$",
+    "$\\overline{c}$",
+    "$\\theta$",
+    "$\\kappa$",
+    "$\\mu_s$",
+    "$\\sigma_s$",
+    "$\\mu_m$",
+    "$\\sigma_m$",
+    # Discrete-time parameters
+    "$\\tilde{\\beta}$",
+    "$\\delta$",
+    "$\\varrho$",
+    # Continuous-time parameters
+    "$\\lambda$",
+    "$\\tilde{\\rho}$",
+    "$\\nu$",
+    "$\\eta$"
+  ),
+  Value = c(
+    gg09$phi,
+    gg09$alpha,
+    gg09$zeta,
+    gg09$c_bar,
+    gg09$theta,
+    gg09$kappa,
+    gg09$mu_s,
+    gg09$sigma_s,
+    gg09$mu_m,
+    gg09$sigma_m,
+    # Discrete-time Parameters
+    gg09$beta_tilde,
+    gg09$delta,
+    gg09$varrho,
+    # Continuous-time Parameters
+    gg09$lambda,
+    gg09$rho_tilde,
+    gg09$nu,
+    gg09$eta
+  )
+) |>
+  tt() |>
+  format_tt(digits = 2, num_zero = TRUE) |>
+  group_tt(
+    i = list(
+      "Common Parameters" = 1,
+      "Discrete-time" = 11,
+      "Continuous-time" = 14
+    )
+  )
+```

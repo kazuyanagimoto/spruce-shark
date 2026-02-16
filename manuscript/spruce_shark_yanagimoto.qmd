@@ -19,7 +19,6 @@ format:
     date-format: long
     number-sections: true
     cite-method: natbib
-    pdf-engine: pdflatex
     documentclass: scrartcl
     papersize: letter
     fontsize: 11pt

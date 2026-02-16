@@ -1,0 +1,7 @@
+[deps]
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+ProjectRoot = "e3f974f6-674d-4b8e-a3d1-5850677db852"
+QuantEcon = "fcd29c91-0bd7-5a09-975d-7ac3f643a60c"
+Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
+YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"

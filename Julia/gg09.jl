@@ -3,7 +3,7 @@ module My
 using Roots
 using Distributions
 using DataFrames
-
+using QuantEcon
 
 struct Single{TF<:AbstractFloat}
     c::TF
@@ -23,7 +23,7 @@ struct Married{TF<:AbstractFloat}
     v::TF
 end
 
-@kwdef struct ModelDT{TF <: AbstractFloat, TI <: Integer}
+@kwdef struct Model{TF <: AbstractFloat, TI <: Integer}
     ## Tastes
     β̃::TF = 0.96
     δ::TF = 1 / 47
@@ -32,7 +32,9 @@ end
     α::TF = 0.278
     ζ::TF = -1.901
     c̄::TF = 0.131
-    
+    θ::TF = 0.206
+    κ::TF = 0.189
+
     ## Prices
     p_1950::TF = 9.959
     γ::TF = 0.059
@@ -40,25 +42,31 @@ end
     Δw::TF = 0.022
     
     ## Match Quality
-    ρ::TF = 0.896
-    μₘₓ::TF = 0.521
-    σₘₓ::TF = sqrt(0.680)
-    μₘ::TF = (1 - ρ) * μₘₓ
-    σₘ::TF = sqrt((1 - ρ^2) * σₘₓ^2)
+    ϱ::TF = 0.896
+    μₘ::TF = 0.521
+    σₘ::TF = sqrt(0.680)
     μₛ::TF = -4.252
     σₛ::TF = sqrt(8.063)
 
+    # Continuous-time
+    Δt::TF = 1e-3
+    ρ̃::TF = -log(β) / Δt
+    ν::TF = -log(1-δ) / Δt
+    ρ::TF = ρ̃ + ν
+    η::TF = -log(ϱ)
+    λ::TF = 1 / Δt
+
     # Grid
     n_b::TI = 100
-    b_tc::Tuple{Vector{TF},Vector{TF},Matrix{TF}} = b_tauchen(n_b, ρ, μₘ, σₘ, μₛ, σₛ)
-    b_grid::Vector{TF} = b_tc[1]
-    F::Vector{TF} = b_tc[2]
-    G::Matrix{TF} = b_tc[3]
+    mc::MarkovChain = tauchen(n_b, ϱ, sqrt(1 - ϱ^2) * σₘ, (1 - ϱ) * μₘ)
+    b_grid::Vector{TF} = collect(mc.state_values)
+    G::Matrix{TF} = mc.p
+    F::Vector{TF} = 1 .- cdf.(Normal(μₛ, σₛ), b_grid)
 end
 
 crra(x, ζ) = iszero(ζ) ? log(x) : x^ζ / ζ
-uˢ(c, n; m) = m.α * log(c - m.c̄) + (1 - m.α) * crra(n, m.ζ)
-uᵐ(c, n; m) = m.α * log((c - m.c̄) / 2^m.ϕ) + (1 - m.α) * crra(n / 2^m.ϕ, m.ζ)
+u(c, n; m, z) = m.α * log((c - m.c̄)) / z^m.ϕ + (1 - m.α) * crra(n / z^m.ϕ, m.ζ)
+
 fn_p(t; m) = m.p_1950 * exp(-m.γ * (t - 1950))
 fn_w(t; m) = m.w_1950 * exp(m.Δw * (t - 1950))
 
@@ -72,7 +80,7 @@ function Single(p, w; m::Model)
     d = C₁ * h
     n = (θ * d^κ + (1 - θ) * h^κ)^(1 / κ)
     c = w * (1 - h) - w * p * d
-    v = uˢ(c, n; m)
+    v = u(c, n; m, z=1)
     return Single(c, h, 1 - h, d, n, v)
 end
 
@@ -85,12 +93,12 @@ function Married(p, w; m::Model)
     d = C₁ * h
     n = (θ * d^κ + (1 - θ) * h^κ)^(1 / κ)
     c = w * (2 - h) - w * p * d
-    v = uᵐ(c, n; m)
+    v = u(c, n; m, z=2)
     return Married(c, h, 2 - h, d, n, v)
 end
 
 function solve(t; m::Model, tol=1e-6, max_iter=1000)
-    (; n_b, b_grid, F, G, β, δ, μₛ, σₛ, μₘ, σₘ, ρ) = m
+    (; n_b, b_grid, F, G, β, δ, μₛ, σₛ, μₘ, σₘ, ϱ) = m
 
     AS = Single(fn_p(t; m), fn_w(t; m); m)
     AM = Married(fn_p(t; m), fn_w(t; m); m)
@@ -155,3 +163,31 @@ end
 
 
 end # module
+
+using .My
+using ProjectRoot
+using YAML
+
+dir = @projectroot("output")
+m = My.Model()
+d = Dict("phi" => m.ϕ,
+    "alpha" => m.α,
+    "zeta" => m.ζ, 
+    "c_bar" => m.c̄,
+    "theta" => m.θ,
+    "kappa" => m.κ,
+    "mu_s" => m.μₛ,
+    "sigma_s" => m.σₛ,
+    "mu_m" => m.μₘ,
+    "sigma_m" => m.σₘ,
+    "beta_tilde" => m.β̃,
+    "delta" => m.δ,
+    "varrho" => m.ϱ,
+    "lambda" => m.λ,
+    "rho_tilde" => m.ρ̃,
+    "nu" => m.ν,
+    "eta" => m.η,
+    "Delta_t" => m.Δt)
+YAML.write_file("$dir/gg09.yaml", d)
+
+My.solve(1950; m)
