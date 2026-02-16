@@ -1,0 +1,58 @@
+---
+title: Marriage and Divorce Dynamics
+subtitle: A Continuous-time Approach
+author:
+  - name: Kazuharu Yanagimoto
+    email: yanagimoto@econ.kobe-u.ac.jp
+    orcid: 0009-0007-1967-8304
+    affiliations:
+    - name: Kobe University
+date: today
+date-format: full
+custom-keywords:
+  - name: JEL Codes
+    values: [J12, J13, D13]   
+thanks: |
+    Thanks
+format:
+  pdf:
+    date-format: long
+    number-sections: true
+    cite-method: natbib
+    pdf-engine: pdflatex
+    documentclass: scrartcl
+    papersize: letter
+    fontsize: 11pt
+    geometry:
+      - margin=1in
+    linestretch: 1.25
+    include-in-header: preamble.tex
+    biblio-style: chicago
+    colorlinks: true
+    linkcolor: coloraccent
+    urlcolor: coloraccent
+    citecolor: coloraccent
+execute: 
+  freeze: auto
+  echo: false
+  warning: false
+  message: false
+knitr:
+  opts_chunk: 
+    fig.align: center
+    fig.retina: 3
+    fig.width: 6
+    fig.height: 3
+    out.width: 90%
+    collapse: true
+bibliography: references.bib
+---
+
+{{< include 01-intro.qmd >}}
+{{< include 02-gg09.qmd >}}
+
+```{=latex}
+\appendix
+```
+
+{{< include 11-apdx-gg09.qmd >}}

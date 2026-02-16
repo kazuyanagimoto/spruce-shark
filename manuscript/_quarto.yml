@@ -1,0 +1,25 @@
+project:
+  type: book
+
+book:
+  title: "manuscript"
+  author: "Norah Jones"
+  date: "2/16/2026"
+  chapters:
+    - index.qmd
+    - 01-intro.qmd
+    - 02-gg09.qmd
+    - references.qmd
+
+bibliography: references.bib
+
+format:
+  html:
+    theme:
+      - cosmo
+      - brand
+  pdf:
+    documentclass: scrreprt
+
+
+

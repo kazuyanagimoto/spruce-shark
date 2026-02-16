@@ -1,0 +1,17 @@
+---
+title: Spruce Shark
+format: gfm
+---
+
+## Why is this project named "Spruce Shark"?
+
+I like Dr. Andrew Heiss' [idea](https://github.com/andrewheiss/testy-turtle) for a project name.
+So I set the seed at `260216` (the day I opened the repository), and it produces a codename "Icky Impala".
+
+```{r}
+#| label: codename
+library(codename)
+codename_message()
+
+codename(seed = 260216, type = "ubuntu")
+```

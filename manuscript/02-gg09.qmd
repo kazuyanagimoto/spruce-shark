@@ -1,0 +1,84 @@
+# Continuos-time Marriage Model
+
+To develop a continuous-time search and matching model of marriage, I build on the canonical framework of @greenwood2009. I begin by presenting their discrete-time formulation and then extend it to continuous time.
+
+## Discrete-time Model
+
+Economy is populated by a continuum of infinitely-lived households. Each household has a marital status $s \in \{M, S\}$, where $M$ and $S$ denote married and single, respectively. In each period, each single  meets a potential partner with a match quality $b \in \mathcal{B}$.^[This match quality $b$ is also called "bliss shock" in @greenwood2009.] They marry if the expected value of being married exceeds that of being single. Each married household receives a flow utility $b$ from the match quality, and can divorce at any time. The match quality evolves stochastically over time, and households make their decisions based on the current match quality and the expected future values. At the end of each period, households exit the economy with probability $\delta$, and new households (of which mass is $\delta$) enter the economy as singles.
+
+**Household Allocation**
+
+Let $z \in \{1, 2\}$ denote the number of adults in the household, i.e., $z = 1$ for singles and $z = 2$ for married household. Each household is endowed with $z$ unit of time, which can be allocated to market work $l$ and home hours $h$. Household obtain utility from consumption $c$ and home production $n$, which is a composite good from home goods $d$ and home hours $h$. The household's problem is given by
+
+$$
+\max_{c, d, h} \alpha \log \left(\frac{c - \overline{c}}{z^\phi}\right) + (1-\alpha) \frac{\left(\frac{n}{z^{\phi}}\right)^{\zeta}}{\zeta}
+$${#eq-utility-dt}
+
+subject to
+
+$$
+\begin{aligned}
+c + wpd &= w(z-h) \\
+n & = \left(\theta d^{\kappa} + (1-\theta)h^{\kappa}\right)^{\frac{1}{\kappa}},
+\end{aligned}
+$$
+
+where $w$ is the wage rate and $p$ is the price of home goods (relative to the wage). The $\overline{c}$ is the minium consumption level, and $\phi$ captures the scale effect of household size on utility. The parameter $\kappa$ captures the substitutability between home goods and home hours in home production, and the $\theta$ is the share of home goods in home production.
+
+The indirect utility function of @eq-utility-dt is denoted by $v(p, w, z)$.
+
+**Match Quality**
+
+Single households meet potential partners with match quality $b$ drawn from a normal distribution:
+
+$$
+b \sim \mathcal{N}(\mu_s, \sigma_s^2),
+$$
+
+where $\mu_s$ and $\sigma_s^2$ are the mean and variance of the match quality of singles. The cumulative distribution function of the match quality of singles is denoted by $F(b)$. The match quality of married households evolves according to an AR(1) process:
+
+$$
+b = (1-\rho)\mu_m + \rho b_{-1} + \sigma_{m}\sqrt{1-\rho^2}\xi, \quad \xi \sim \mathcal{N}(0, 1).
+$$
+
+The cumulative distribution function of the match quality of married households is denoted by $G(b'|b)$.
+
+**Value Functions**
+
+The value functions of married and single households, denoted by $V^M(b)$ and $V^S$, are given by
+
+$$
+\begin{aligned}
+V^M(b) &= v(p, w, 2) + b + \beta \int_{\mathcal{B}} \max\{V^M(b'), V^S\} \,dG(b'|b), \\
+V^S &= v(p, w, 1) + \beta \int_{\mathcal{B}} \max\{V^M(b), V^S\} \,dF(b).
+\end{aligned}
+$${#eq-bellman-dt}
+
+The household chooses to marry if $V^M(b) \geq V^S$ and remains single otherwise. Married households choose to divorce if $V^M(b) < V^S$ and remain married otherwise.
+
+**Stational Distribution**
+
+Let $s_{-1}$ and $\mu_{-1}(b)$ be the density of singles and married households with match quality $b$ in the previous period. Then, the density of singles and married households with match quality $b$ in the current period, denoted by $s$ and $\mu(b)$, are given by
+
+$$
+\begin{aligned}
+s &= \delta + (1-\delta)s_{-1}\int_{\mathcal{B}} \mathbb{1}\left\{V^M(b) < V^S\right\} \,dF(b)\\
+& + (1-\delta)(1-s_{-1})\int_{\mathcal{B}}\int_{\mathcal{B}}^{b} \mathbb{1}\left\{V^M(b') < V^S\right\} \,dG(b'|b_{-1})\,d\mu_{-1}(b_{-1}),\\
+\mu(b) &= (1-\delta)s_{-1}\int_{\mathcal{B}}^{b} \mathbb{1}\left\{V^M(b') \geq V^S\right\} \,dF(b')\\
+& + (1-\delta)(1-s_{-1})\int_{\mathcal{B}}\int_{\mathcal{B}}^{b}\mathbb{1}\left\{V^M(b') \geq V^S\right\} \,dG(b'|b_{-1})\,d\mu_{-1}(b_{-1}).
+\end{aligned}
+$${#eq-stationary-dt}
+
+The stationary distribution is the fixed point of @eq-stationary-dt, i.e., $s = s_{-1}$ and $\mu(b) = \mu_{-1}(b)$ for all $b \in \mathcal{B}$.
+
+**Equilibrium**
+
+To close the model, the production side is defined as a linear technlogy, $y = wl$. The price of home goods $p$ is exogenously given. A stationary equilibrium is a tuple $\{V^M(b), V^S, s, \mu(b)\}$ such that
+
+1. $V^M(b)$ and $V^S$ satisfy @eq-bellman-dt
+1. $s$ and $\mu(b)$ is a stationary distribution that satisfies @eq-stationary-dt with $s = s_{-1}$ and $\mu(b) = \mu_{-1}(b)$ for all $b \in \mathcal{B}$.
+
+
+## Continuous-time Model
+
+
