@@ -9,6 +9,8 @@ book:
     - index.qmd
     - 01-intro.qmd
     - 02-gg09.qmd
+  appendices:
+    - 11-apdx-gg09.qmd
     - references.qmd
 
 bibliography: references.bib

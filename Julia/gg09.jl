@@ -4,6 +4,7 @@ using Roots
 using Distributions
 using DataFrames
 using QuantEcon
+using LinearAlgebra
 
 struct Single{TF<:AbstractFloat}
     c::TF
@@ -23,7 +24,7 @@ struct Married{TF<:AbstractFloat}
     v::TF
 end
 
-@kwdef struct Model{TF <: AbstractFloat, TI <: Integer}
+@kwdef struct Model{TF<:AbstractFloat,TI<:Integer}
     ## Tastes
     β̃::TF = 0.96
     δ::TF = 1 / 47
@@ -40,7 +41,7 @@ end
     γ::TF = 0.059
     w_1950::TF = 1.0
     Δw::TF = 0.022
-    
+
     ## Match Quality
     ϱ::TF = 0.896
     μₘ::TF = 0.521
@@ -50,25 +51,41 @@ end
 
     # Continuous-time
     Δt::TF = 1e-3
+    λ::TF = 1 / Δt
     ρ̃::TF = -log(β) / Δt
-    ν::TF = -log(1-δ) / Δt
+    ν::TF = -log(1 - δ) / Δt
     ρ::TF = ρ̃ + ν
     η::TF = -log(ϱ)
-    λ::TF = 1 / Δt
 
     # Grid
     n_b::TI = 100
-    mc::MarkovChain = tauchen(n_b, ϱ, sqrt(1 - ϱ^2) * σₘ, (1 - ϱ) * μₘ)
+    mc::MarkovChain = tauchen(n_b, ϱ, sqrt(1 - ϱ^2) * σₘ, (1 - ϱ) * μₘ, 4.)
     b_grid::Vector{TF} = collect(mc.state_values)
     G::Matrix{TF} = mc.p
-    F::Vector{TF} = 1 .- cdf.(Normal(μₛ, σₛ), b_grid)
+    F::Vector{TF} = construct_F(μₛ, σₛ, b_grid)
+
+    # Solution
+    V::Vector{TF} = zeros(n_b)
+    W::Vector{TF} = zeros(1)
+    M::Vector{TF} = zeros(n_b)
 end
 
 crra(x, ζ) = iszero(ζ) ? log(x) : x^ζ / ζ
-u(c, n; m, z) = m.α * log((c - m.c̄)) / z^m.ϕ + (1 - m.α) * crra(n / z^m.ϕ, m.ζ)
+u(c, n; m, z) = m.α * log((c - m.c̄) / z^m.ϕ) + (1 - m.α) * crra(n / z^m.ϕ, m.ζ)
 
 fn_p(t; m) = m.p_1950 * exp(-m.γ * (t - 1950))
 fn_w(t; m) = m.w_1950 * exp(m.Δw * (t - 1950))
+
+function construct_F(μₛ, σₛ, b_grid)
+    Δb = b_grid[2] - b_grid[1]
+    F = zeros(length(b_grid))
+    F[begin] = cdf(Normal(μₛ, σₛ), b_grid[begin] + 0.5Δb)
+    for i in 2:(length(b_grid)-1)
+        F[i] = cdf(Normal(μₛ, σₛ), b_grid[i] + 0.5Δb) - cdf(Normal(μₛ, σₛ), b_grid[i] - 0.5Δb)
+    end
+    F[end] = 1 - cdf(Normal(μₛ, σₛ), b_grid[end] - 0.5Δb)
+    return F
+end
 
 
 function Single(p, w; m::Model)
@@ -103,60 +120,68 @@ function solve(t; m::Model, tol=1e-6, max_iter=1000)
     AS = Single(fn_p(t; m), fn_w(t; m); m)
     AM = Married(fn_p(t; m), fn_w(t; m); m)
 
-    # VFI
+    # VFI ----------------------------------------------------------------------
     dist = Inf
     iter = 0
-    V = zeros(n_b)
-    V′ = similar(V)
-    W, W′ = 0., 0.
+    V = similar(m.V)
+    W = similar(m.W)
     while dist > tol && iter < max_iter
         for i = 1:n_b
-            V′[i] = AM.v + b_grid[i]
+            V[i] = AM.v + b_grid[i]
             for j in 1:n_b
-                V′[i] += β * max(V[j], W) * G[i, j]
+                V[i] += β * max(m.V[j], m.W[1]) * G[i, j]
             end
         end
-        W′ = AS.v
+        W = AS.v
         for i in 1:n_b
-            W′ += β * max(V[i], W) * F[i]
+            W += β * max(V[i], m.W[1]) * F[i]
         end
 
-        dist = maximum(abs, (V′ .- V)) + abs(W′ - W)
-        V .= V′
-        W = W′
+        dist = maximum(abs, (V .- m.V)) + abs(W - m.W[1])
+        m.V .= V
+        m.W[1] = W
         iter += 1
     end
 
-    # Steady State Distributions
-    ĩ = searchsortedfirst(V, W) # V[ĩ-1] < W ≤ V[ĩ]
-    ω = (W - V[ĩ-1]) / (V[ĩ] - V[ĩ-1]) # weight
-    b̃ = (1-ω) * b_grid[ĩ-1] + ω * b_grid[ĩ] # V(b̃) = W
-    s = 0.
-    M = zeros(n_b)
-    M[ĩ:end] .= 1 / (n_b - ĩ + 1)
-    M′ = copy(M)
-    dist = Inf
-    iter = 0
-    while dist > tol && iter < max_iter
-        for j = ĩ:n_b
-            M′[j] = (δ + (1 - δ) * s) * F[j]
-            for i in eachindex(b_grid)
-                M′[j] += (1 - δ) * G[i, j] * M[i]
-            end
+    # Steady State Distributions -----------------------------------------------
+    ι = searchsortedfirst(V, W) # V[ι-1] < W ≤ V[ι]
+    ω = (W - V[ι-1]) / (V[ι] - V[ι-1]) # fraction of bin ι below W
+
+    # Construct transition matrix P of size (n_b + 1) × (n_b + 1)
+    # States 1..n_b = married at b_grid[i], state n_b+1 = single
+    # The threshold bin ι is split by ω: fraction ω → single, (1-ω) → married.
+    P = zeros(n_b + 1, n_b + 1)
+
+    # Married (column j) → Married/Single
+    for j in 1:n_b
+        for i in (ι+1):n_b
+            P[i, j] = G[j, i]
         end
-        dist = maximum(abs, (M′ .- M))
-        M .= M′
-        s = 1 - sum(M)
-        iter += 1
+        P[ι, j] = G[j, ι] * (1 - ω)
+        P[n_b+1, j] = sum(G[j, k] for k in 1:(ι-1)) + G[j, ι] * ω
     end
 
-    prob_marriage = 1 - cdf(Normal(μₛ, σₛ), b̃)
-    prob_divorce = sum(G[i, j] * M[i] for i in ĩ:n_b, j = 1:ĩ-1) / (1 - s)
+    # Single (column n_b+1) → Married/Single
+    for i in (ι+1):n_b
+        P[i, n_b+1] = F[i]
+    end
+    P[ι, n_b+1] = F[ι] * (1 - ω)
+    P[n_b+1, n_b+1] = sum(F[k] for k in 1:(ι-1)) + F[ι] * ω
+
+    prob_marriage = 1 - P[n_b+1, n_b+1]
+
+
+    # Solve M̃ = (1-δ)P M̃ + d where d = (0,...,0,δ)
+    M̃ = (I - (1 - δ) * P) \ vcat(zeros(n_b), δ)
+    m.M .= M̃[1:n_b]
+    s = M̃[n_b+1]
+
+    prob_divorce = sum(P[n_b+1, i] * M̃[i] for i in 1:n_b) / (1 - s)
 
     return (t=t, s=s, us=AS.v, um=AM.v, pm=prob_marriage, pd=prob_divorce)
 end
 
-function simulate(;m=Model(), years=1950:2000)
+function simulate(; m=Model(), years=1950:2000)
     rows = solve.(years; m)
     return DataFrame(rows)
 end
@@ -164,6 +189,7 @@ end
 
 end # module
 
+using Revise
 using .My
 using ProjectRoot
 using YAML
@@ -172,7 +198,7 @@ dir = @projectroot("output")
 m = My.Model()
 d = Dict("phi" => m.ϕ,
     "alpha" => m.α,
-    "zeta" => m.ζ, 
+    "zeta" => m.ζ,
     "c_bar" => m.c̄,
     "theta" => m.θ,
     "kappa" => m.κ,
@@ -190,4 +216,13 @@ d = Dict("phi" => m.ϕ,
     "Delta_t" => m.Δt)
 YAML.write_file("$dir/gg09.yaml", d)
 
+
 My.solve(1950; m)
+df = My.simulate()
+
+using Plots
+
+p1 = plot(df.t, df.pm, label=false, title="Marriages", ylims=(0.05, 0.2))
+p2 = plot(df.t, df.pd, label=false, title="Divorces", ylims=(0.01, 0.025))
+
+plot(p1, p2)

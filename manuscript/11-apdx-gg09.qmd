@@ -2,4 +2,75 @@
 
 ## Discrete-time Model
 
+Computation of the discrete-time model proceeds in three steps: (i) household allocation, (ii) value function iteration, and (iii) stationary distributions. Since the household allocation is a static problem, the indirect utility functions $v(p, w, 1)$ and $v(p, w, 2)$ need only be computed once for each set of prices.
+
+The match quality $b$ is discretized on an equally spaced grid $\{b_1, \dots, b_N\}$ with $N$ points. The value function $V(b)$ evaluated at each grid point is collected into a vector $\mathbf{V} = (V_1, \dots, V_N)^{\top}$. The transition kernel of match quality during marriage, $G(b'|b)$, is approximated by an $N \times N$ row-stochastic matrix $\mathbf{G}$ using @tauchen1986's method, where $G_{j,i} \approx \Pr(b' \in \text{bin } i \mid b = b_j)$. Similarly, the distribution of match quality for new encounters, $F(b)$, is discretized into a probability vector $\mathbf{F} = (F_1, \dots, F_N)^{\top}$ with $F_i = \Pr(b \in \text{bin } i)$.
+
+The computational bottleneck is the matrix-vector product $\mathbf{G} \max\{\mathbf{V}, W\}$, which costs $O(N^2)$ per iteration.
+
+**Value Functions**
+
+The discretized Bellman equations are
+
+$$
+\begin{aligned}
+\mathbf{V} &= v(p, w, 2) + \mathbf{b} + \beta \, \mathbf{G} \max\{\mathbf{V}, W\},\\
+W &= v(p, w, 1) + \beta \, \mathbf{F}^{\top} \max\{\mathbf{V}, W\},
+\end{aligned}
+$$
+
+where $\mathbf{b} = (b_1, \dots, b_N)^{\top}$ is the grid vector and $\max\{\mathbf{V}, W\}$ is taken element-wise. These equations are solved by standard value function iteration (VFI).
+
+**Stationary Distributions**
+
+The stationary distribution is characterized by an $(N+1)$-dimensional state vector, where states $1, \dots, N$ represent married households at each grid point and state $N+1$ represents singles. Let $\mathbf{M} = (M_1, \dots, M_N)^{\top}$ denote the mass of married households at each grid point and $s$ the mass of singles. With the exit rate $\delta$, the stationarity condition is
+
+$$
+\begin{pmatrix}
+\mathbf{M} \\
+s
+\end{pmatrix} = (1-\delta)\,\mathbf{P} \begin{pmatrix}\mathbf{M} \\
+s
+\end{pmatrix} + \begin{pmatrix}\mathbf{0} \\ \delta
+\end{pmatrix},
+$$
+
+where $\mathbf{P}$ is the $(N+1) \times (N+1)$ column-stochastic transition matrix defined below. This linear system has the closed-form solution
+
+$$
+\begin{pmatrix}\mathbf{M} \\
+s
+\end{pmatrix} = \left(\mathbf{I} - (1-\delta)\,\mathbf{P}\right)^{-1} \begin{pmatrix}\mathbf{0} \\ \delta
+\end{pmatrix}.
+$$
+
+Since $V(b)$ is increasing in $b$, there exists a threshold index $\iota$ such that
+
+$$
+V_{\iota-1} < W \leq V_{\iota}.
+$$
+
+Households with match quality above this threshold prefer marriage; those below prefer being single. To handle the fact that the threshold generally falls between grid points, I split the bin $\iota$ using the interpolation weight
+
+$$
+\omega = \frac{W - V_{\iota-1}}{V_{\iota} - V_{\iota-1}} \in [0, 1].
+$$
+
+A fraction $\omega$ of bin $\iota$ is assigned to the divorce/single state, and the remaining fraction $1 - \omega$ stays in the married state. The entries of $\mathbf{P} = \{P_{i,j}\}$ are
+
+$$
+P_{i, j} = \begin{cases}
+G_{j, i} & i > \iota, \quad 1 \leq j \leq N \\
+G_{j, \iota}\, (1 - \omega) & i = \iota, \quad 1 \leq j \leq N \\
+\displaystyle\sum_{k=1}^{\iota-1} G_{j, k} + G_{j, \iota}\, \omega & i = N+1, \quad 1 \leq j \leq N \\[6pt]
+F_{i} & i > \iota, \quad j = N+1 \\
+F_{\iota}\, (1 - \omega) & i = \iota, \quad j = N+1 \\
+\displaystyle\sum_{k=1}^{\iota-1} F_{k} + F_{\iota}\, \omega & i = N+1, \quad j = N+1 \\[6pt]
+0 & \text{otherwise.}
+\end{cases}
+$$
+
+Each column sums to one by construction, since $\sum_{i=1}^{N} G_{j,i} = 1$ and $\sum_{i=1}^{N} F_i = 1$.
+
+
 ## Continuous-time Model

@@ -19,14 +19,14 @@ To develop a continuous-time search and matching model of marriage, I build on t
 
 ## Discrete-time Model
 
-Economy is populated by a continuum of infinitely-lived households. Each household has a marital status $s \in \{M, S\}$, where $M$ and $S$ denote married and single, respectively. In each period, each single  meets a potential partner with a match quality $b \in \mathcal{B}$.^[This match quality $b$ is also called "bliss shock" in @greenwood2009.] They marry if the expected value of being married exceeds that of being single. Each married household receives a flow utility $b$ from the match quality, and can divorce at any time. The match quality evolves stochastically over time, and households make their decisions based on the current match quality and the expected future values. At the end of each period, households exit the economy with probability $\delta$, and new households (of which mass is $\delta$) enter the economy as singles.
+Economy is populated by a continuum of infinitely-lived households. Each household has a marital status, single or married. In each period, each single  meets a potential partner with a match quality $b \in \mathcal{B}$.^[This match quality $b$ is also called "bliss shock" in @greenwood2009.] They marry if the expected value of being married exceeds that of being single. Each married household receives a flow utility $b$ from the match quality, and can divorce at any time. The match quality evolves stochastically over time, and households make their decisions based on the current match quality and the expected future values. At the end of each period, households exit the economy with probability $\delta$, and new households (of which mass is $\delta$) enter the economy as singles.
 
 **Household Allocation**
 
 Let $z \in \{1, 2\}$ denote the number of adults in the household, i.e., $z = 1$ for singles and $z = 2$ for married household. Each household is endowed with $z$ unit of time, which can be allocated to market work $l$ and home hours $h$. Household obtain utility from consumption $c$ and home production $n$, which is a composite good from home goods $d$ and home hours $h$. The household's problem is given by
 
 $$
-\max_{c, d, h} \alpha \log \left(\frac{c - \overline{c}}{z^\phi}\right) + (1-\alpha) \frac{\left(\frac{n}{z^{\phi}}\right)^{\zeta}}{\zeta}
+\max_{c, d, h} \alpha \log \left(\frac{c - \overline{c}}{z^\phi}\right) + \frac{1-\alpha}{\zeta} \left(\frac{n}{z^{\phi}}\right)^{\zeta}
 $${#eq-utility-dt}
 
 subject to
@@ -54,44 +54,44 @@ where $\mu_s$ and $\sigma_s^2$ are the mean and variance of the match quality of
 
 $$
 b = (1-\varrho)\mu_m + \varrho b_{-1} + \sigma_{m}\sqrt{1-\varrho^2}\xi, \quad \xi \sim \mathcal{N}(0, 1).
-$$
+$${#eq-ar1}
 
 The cumulative distribution function of the match quality of married households is denoted by $G(b'|b)$.
 
 **Value Functions**
 
-The value functions of married and single households, denoted by $V^M(b)$ and $V^S$, are given by
+The value functions of married and single households, denoted by $V(b)$ and $W$, are given by
 
 $$
 \begin{aligned}
-V^M(b) &= v(p, w, 2) + b + \beta \int_{\mathcal{B}} \max\{V^M(b'), V^S\} \,dG(b'|b), \\
-V^S &= v(p, w, 1) + \beta \int_{\mathcal{B}} \max\{V^M(b), V^S\} \,dF(b).
+V(b) &= v(p, w, 2) + b + \beta \int_{\mathcal{B}} \max\{V(b'), W\} \,dG(b'|b), \\
+W &= v(p, w, 1) + \beta \int_{\mathcal{B}} \max\{V(b), W\} \,dF(b).
 \end{aligned}
 $${#eq-bellman-dt}
 
-The effective discount rate $\beta := \tilde{\beta} (1 - \delta)$ is the product of the discount factor $\tilde{\beta}$ and the survival probability $1 - \delta$. The household chooses to marry if $V^M(b) \geq V^S$ and remains single otherwise. Married households choose to divorce if $V^M(b) < V^S$ and remain married otherwise.
+The effective discount rate $\beta := \tilde{\beta} (1 - \delta)$ is the product of the discount factor $\tilde{\beta}$ and the survival probability $1 - \delta$. The household chooses to marry if $V(b) \geq W$ and remains single otherwise. Married households choose to divorce if $V(b) < W$ and remain married otherwise.
 
 **Stational Distribution**
 
-Let $s_{-1}$ and $\mu_{-1}(b)$ be the density of singles and married households with match quality $b$ in the previous period. Then, the density of singles and married households with match quality $b$ in the current period, denoted by $s$ and $\mu(b)$, are given by
+Let $s_{-1}$ and $\mu_{-1}(b)$ be the density of singles and married households with match quality $b$ in the previous period. Then, the density of singles and married households with match quality $b$ in the current period, denoted by $s$ and $M(b)$, are given by
 
 $$
 \begin{aligned}
-s &= \delta + (1-\delta)s_{-1}\int_{\mathcal{B}} \mathbb{1}\left\{V^M(b) < V^S\right\} \,dF(b)\\
-& + (1-\delta)(1-s_{-1})\int_{\mathcal{B}}\int_{\mathcal{B}}^{b} \mathbb{1}\left\{V^M(b') < V^S\right\} \,dG(b'|b_{-1})\,d\mu_{-1}(b_{-1}),\\
-\mu(b) &= (1-\delta)s_{-1}\int_{\mathcal{B}}^{b} \mathbb{1}\left\{V^M(b') \geq V^S\right\} \,dF(b')\\
-& + (1-\delta)(1-s_{-1})\int_{\mathcal{B}}\int_{\mathcal{B}}^{b}\mathbb{1}\left\{V^M(b') \geq V^S\right\} \,dG(b'|b_{-1})\,d\mu_{-1}(b_{-1}).
+s &= \delta + (1-\delta)s_{-1}\int_{\mathcal{B}} \mathbb{1}\left\{V(b) < W\right\} \,dF(b)\\
+& + (1-\delta)(1-s_{-1})\int_{\mathcal{B}}\int_{\mathcal{B}}^{b} \mathbb{1}\left\{V(b') < W\right\} \,dG(b'|b_{-1})\,d\mu_{-1}(b_{-1}),\\
+M(b) &= (1-\delta)s_{-1}\int_{\mathcal{B}}^{b} \mathbb{1}\left\{V(b') \geq W\right\} \,dF(b')\\
+& + (1-\delta)(1-s_{-1})\int_{\mathcal{B}}\int_{\mathcal{B}}^{b}\mathbb{1}\left\{V(b') \geq W\right\} \,dG(b'|b_{-1})\,d\mu_{-1}(b_{-1}).
 \end{aligned}
 $${#eq-stationary-dt}
 
-The stationary distribution is the fixed point of @eq-stationary-dt, i.e., $s = s_{-1}$ and $\mu(b) = \mu_{-1}(b)$ for all $b \in \mathcal{B}$.
+The stationary distribution is the fixed point of @eq-stationary-dt, i.e., $s = s_{-1}$ and $M(b) = \mu_{-1}(b)$ for all $b \in \mathcal{B}$.
 
 **Equilibrium**
 
-To close the model, the production side is defined as a linear technlogy, $y = wl$. The price of home goods $p$ is exogenously given. A stationary equilibrium is a tuple $\{V^M(b), V^S, s, \mu(b)\}$ such that
+To close the model, the production side is defined as a linear technlogy, $y = wl$. The price of home goods $p$ is exogenously given. A stationary equilibrium is a tuple $\{V(b), W, s, M(b)\}$ such that
 
-1. $V^M(b)$ and $V^S$ satisfy @eq-bellman-dt
-1. $s$ and $\mu(b)$ is a stationary distribution that satisfies @eq-stationary-dt with $s = s_{-1}$ and $\mu(b) = \mu_{-1}(b)$ for all $b \in \mathcal{B}$.
+1. $V(b)$ and $W$ satisfy @eq-bellman-dt
+1. $s$ and $M(b)$ is a stationary distribution that satisfies @eq-stationary-dt with $s = s_{-1}$ and $M(b) = \mu_{-1}(b)$ for all $b \in \mathcal{B}$.
 
 
 ## Continuous-time Model
@@ -103,31 +103,31 @@ Consider a continuous-time version of the model. While the household allocation 
 Single households meet potential partners with Poisson arrival rate $\lambda$, and the match quality $b_t$ is drawn from a normal distribution @eq-dist-match-single, of which CDF and PDF is $F(b)$ and $f(b)$. The match quality of married households evolves according to an OU process:
 
 $$
-d b_t = \eta(\mu_m - b_t) dt + \sigma_{m} dW_t,
+d b_t = \eta(\mu_m - b_t) dt + \sigma_{m} dB_t,
 $$
 
-where $W_t$ is a standard Brownian motion.
+where $B_t$ is a standard Brownian motion.
 
 **Value Functions**
 
-Let $V^M(b)$ and $V^S$ be the value functions of married and single households. Single households choose to marry if $V^M(b) \geq V^S$ and remain single otherwise. Married households choose to divorce if $V^M(b) < V^S$ and remain married otherwise. This implies the following variation inequality:
+Let $V(b)$ and $W$ be the value functions of married and single households. Single households choose to marry if $V(b) \geq W$ and remain single otherwise. Married households choose to divorce if $V(b) < W$ and remain married otherwise. This implies the following variation inequality:
 
 $$
-V^M(b) \geq V^S \quad \text{for all }b \in \mathcal{B},
+V(b) \geq W \quad \text{for all }b \in \mathcal{B},
 $$
 
 which define an endogenous marriage/divorce threshold:
 
 $$
-b^* = \inf\{b \in \mathcal{B} : V^M(b) \geq V^S\}.
+b^* = \inf\{b \in \mathcal{B} : V(b) \geq W\}.
 $$
 
 The value functions satisfy the following HJB equations:
 
 $$
 \begin{aligned}
-\rho V^S &= v(p, w, 1) + \lambda \int_{b^*}^{\infty} V^M(b') - V^S \,dF(b'), \\
-\rho V^M(b) &= v(p, w, 2) + b + \eta(\mu_m - b) \frac{\partial V^M(b)}{\partial b} + \frac{1}{2}\sigma_m^2 \frac{\partial^2 V^M(b)}{\partial b^2}.
+\rho W &= v(p, w, 1) + \lambda \int_{b^*}^{\infty} V(b') - W \,dF(b'), \\
+\rho V(b) &= v(p, w, 2) + b + \eta(\mu_m - b) \frac{\partial V(b)}{\partial b} + \frac{1}{2}\sigma_m^2 \frac{\partial^2 V(b)}{\partial b^2}.
 \end{aligned}
 $${#eq-hjb}
 
@@ -139,21 +139,21 @@ The effective discount rate $\rho$ is the sum of the discount rate and the exit 
 The stationary distribution is the solution to the Kolmogorov Forward equation, which is given by
 
 $$
-0 = -\frac{\partial}{\partial b}\left[\eta(\mu_m - b)\mu(b)\right] + \frac{1}{2}\sigma_m^2 \frac{\partial^2 \mu(b)}{\partial b^2} + \lambda s f(b) - \nu \mu(b) \quad \text{for } b > b^*,
+0 = -\frac{\partial}{\partial b}\left[\eta(\mu_m - b)M(b)\right] + \frac{1}{2}\sigma_m^2 \frac{\partial^2 M(b)}{\partial b^2} + \lambda s f(b) - \nu M(b) \quad \text{for } b > b^*,
 $${#eq-kf}
 
-where $\mu(b)$ is the density of married households with match quality $b$, and $s$ is the mass of single households,
+where $M(b)$ is the density of married households with match quality $b$, and $s$ is the mass of single households,
 
 $$
-s = 1 - \int_{b^*}^{\infty} \mu(b) \, db.
+s = 1 - \int_{b^*}^{\infty} M(b) \, db.
 $${#eq-population-ct}
 
 **Equilibrium**
 
-A stationary equilibrium is a tuple $\{V^M(b), V^S, s, \mu(b)\}$ such that
+A stationary equilibrium is a tuple $\{V(b), W, s, M(b)\}$ such that
 
-1. $V^M(b)$ and $V^S$ satisfy @eq-hjb
-1. $s$ and $\mu(b)$ is a stationary distribution that satisfies @eq-kf with @eq-population-ct for all $b > b^*$.
+1. $V(b)$ and $W$ satisfy @eq-hjb
+1. $s$ and $M(b)$ is a stationary distribution that satisfies @eq-kf with @eq-population-ct for all $b > b^*$.
 
 ## Estimation
 
