@@ -74,3 +74,83 @@ Each column sums to one by construction, since $\sum_{i=1}^{N} G_{j,i} = 1$ and 
 
 
 ## Continuous-time Model
+
+Computation of the continuous-time model follows @achdou2022 and proceeds in three steps: (i) finite difference discretization of the Ornstein--Uhlenbeck (OU) generator, (ii) solving the HJB equation with a variational inequality for endogenous divorce, and (iii) solving the Kolmogorov Forward equation for the stationary distribution.
+
+As in the discrete-time case, the match quality $b$ is discretized on a uniform grid $\{b_1, \dots, b_N\}$ with spacing $\Delta b = (b_N - b_1)/(N - 1)$, centered at $\mu_m$ and spanning $\pm n_{\text{std}} \cdot \sigma_m$ standard deviations of the OU stationary distribution. Value functions evaluated at the grid are collected into vectors $\mathbf{V} = (V_1, \dots, V_N)^{\top}$.
+
+**OU Generator**
+
+The OU process @eq-ou-process has drift $\eta(\mu_m - b)$ and diffusion coefficient $\eta\sigma_m^2$. Its infinitesimal generator, which appears as the differential operator on the right-hand side of the married HJB @eq-hjb-married, is discretized into a sparse $N \times N$ matrix $\mathbf{A}$ using an upwind scheme for the drift and central differences for the diffusion. Denoting the drift at each grid point by $d_i = \eta(\mu_m - b_i)$, the entries are
+
+$$
+A_{i,j} = \begin{cases}
+d_i^{+}/\Delta b + \eta\sigma_m^2 / \Delta b^2 & j = i + 1, \\
+-d_i^{-}/\Delta b + \eta\sigma_m^2 / \Delta b^2 & j = i - 1, \\
+-(A_{i,i-1} + A_{i,i+1}) & j = i, \\
+0 & \text{otherwise},
+\end{cases}
+$$
+
+for interior points $i = 2, \dots, N-1$, where $d_i^{+} = \max(d_i, 0)$ and $d_i^{-} = \min(d_i, 0)$ denote the positive and negative parts of the drift. The upwind scheme selects the forward difference when the drift is positive ($b_i < \mu_m$) and the backward difference when it is negative ($b_i > \mu_m$), ensuring monotonicity of the scheme. At the boundaries $i = 1$ and $i = N$, one-sided differences with reflecting conditions are imposed.
+
+The resulting matrix $\mathbf{A}$ is tridiagonal, so all linear systems involving $\mathbf{A}$ can be solved in $O(N)$ time via sparse LU factorization.
+
+**Value Functions**
+
+Evaluating the married HJB @eq-hjb-married at each grid point and replacing the derivatives with the finite difference operator $\mathbf{A}$ gives the system
+
+$$
+\rho\,\mathbf{V} = \mathbf{u}_m + \mathbf{A}\,\mathbf{V},
+$$
+
+where $\mathbf{u}_m = (v(p, w, 2) + b_1, \dots, v(p, w, 2) + b_N)^{\top}$ is the flow utility vector. Rather than inverting $(\rho\,\mathbf{I} - \mathbf{A})$ directly, an implicit time-stepping scheme is used to handle the variational inequality $V(b) \geq W$. Introducing a pseudo-time step $\Delta > 0$, define the implicit matrix
+
+$$
+\mathbf{B} = \left(\frac{1}{\Delta} + \rho\right)\mathbf{I} - \mathbf{A}.
+$$
+
+Since $\mathbf{B}$ does not depend on $\mathbf{V}$ or $W$, its sparse LU factorization is computed once before the iteration begins.
+
+The single's value $W$ satisfies @eq-hjb-single, which rearranges to
+
+$$
+W = \frac{v(p, w, 1) + \lambda \sum_{i:\,V_i > W} V_i\,f(b_i)\,\Delta b}{\rho + \lambda \sum_{i:\,V_i > W} f(b_i)\,\Delta b},
+$$
+
+where $f(\cdot)$ is the PDF of the singles' draw distribution $\mathcal{N}(\mu_s, \sigma_s^2)$ and the integral is approximated by the trapezoidal rule.
+
+The algorithm uses a nested loop structure.^[Unlike the DT Bellman operator, the CT implicit scheme with variational inequality is not a contraction mapping when $W$ varies simultaneously with $\mathbf{V}$. Fixing $W$ in the inner loop restores monotone convergence of $\mathbf{V}$, following the standard approach for optimal stopping problems in continuous time @mellior2024.] The outer loop updates $W$ with damping, and the inner loop solves the married HJB to convergence for a given $W$:
+
+::: {#alg-hjb}
+
+## HJB iteration with variational inequality
+
+1. Initialize $W \leftarrow v(p, w, 1)/\rho$ and $\mathbf{V}$ from a heuristic guess.
+2. **Inner loop** (holding $W$ fixed): repeat until $\|\mathbf{V}^{n+1} - \mathbf{V}^n\|_\infty < \varepsilon$:
+   a. Form $\mathbf{r}^n = \mathbf{u}_m + \frac{1}{\Delta}\,\mathbf{V}^{n}$ and compute $\mathbf{V}^{n+1} = \mathbf{B}^{-1}\,\mathbf{r}^n$, which costs $O(N)$ because $\mathbf{B}$ is tridiagonal and the factorization is reused.
+   b. Project: $V_i^{n+1} \leftarrow \max\{V_i^{n+1},\, W\}$ for all $i$.
+3. **Outer update**: compute $W^{\text{new}}$ from the formula above using the converged $\mathbf{V}$, then dampen $W \leftarrow \tfrac{1}{2}W^{\text{new}} + \tfrac{1}{2}W$.
+4. Repeat steps 2--3 until $|W^{\text{new}} - W| < \varepsilon$.
+
+:::
+
+At convergence the $1/\Delta$ terms cancel ($\mathbf{V}^{n+1} = \mathbf{V}^n$), recovering the steady-state system $\rho\,\mathbf{V} = \mathbf{u}_m + \mathbf{A}\,\mathbf{V}$. A large pseudo-time step ($\Delta = 1000$) yields inner convergence in roughly 30 iterations, and the outer loop typically requires about 30 iterations as well. The per-iteration cost of the inner loop is $O(N)$, replacing the $O(N^2)$ dense matrix--vector product $\mathbf{G}\max\{\mathbf{V}, W\}$ that dominates each DT VFI iteration.
+
+**Stationary Distribution**
+
+The divorce threshold $b^*$ is identified from the converged value function as the largest grid point at which $V_i \leq W$. The stationary density of married households $\mathbf{M} = (M_1, \dots, M_N)^{\top}$ satisfies the discretized Kolmogorov Forward equation (@eq-kf). An absorbing barrier is imposed at $b^*$ by zeroing out the rows and columns of $\mathbf{A}^{\top}$ corresponding to $b_i \leq b^*$, which forces $M_i = 0$ at those points. The KFE then reads
+
+$$
+\mathbf{0} = \mathbf{A}^{\top}\mathbf{M} - \nu\,\mathbf{M} + \lambda\,s\,\mathbf{f},
+$$
+
+where $\mathbf{f} = (f(b_1), \dots, f(b_N))^{\top}$ is the singles' density vector, $\nu$ is the exit rate, and $s = 1 - \Delta b\,\mathbf{1}^{\top}\mathbf{M}$ is the mass of singles from @eq-population-ct. Substituting this expression for $s$ gives a single linear system in $\mathbf{M}$:
+
+$$
+\bigl(\mathbf{A}^{\top} - \nu\,\mathbf{I} - \lambda\,\Delta b\,\mathbf{f}\,\mathbf{1}^{\top}\bigr)\,\mathbf{M} = -\lambda\,\mathbf{f},
+$$
+
+which is solved directly.
+
+The computational bottleneck is the sparse LU factorization of the $N \times N$ implicit matrix $\bigl(\frac{1}{\Delta} + \rho\bigr)\mathbf{I} - \mathbf{A}$, which is tridiagonal and costs $O(N)$. This factorization is performed once and reused across all HJB iterations. As a result, the continuous-time solver scales as $O(N)$ in the grid size, compared to $O(N^2)$ for the discrete-time VFI where the dense Tauchen matrix $\mathbf{G}$ is the bottleneck.

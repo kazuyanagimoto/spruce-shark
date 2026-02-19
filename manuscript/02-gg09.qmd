@@ -103,10 +103,10 @@ Consider a continuous-time version of the model. While the household allocation 
 Single households meet potential partners with Poisson arrival rate $\lambda$, and the match quality $b_t$ is drawn from a normal distribution @eq-dist-match-single, of which CDF and PDF is $F(b)$ and $f(b)$. The match quality of married households evolves according to an OU process:
 
 $$
-d b_t = \eta(\mu_m - b_t) dt + \sigma_{m} dB_t,
-$$
+d b_t = \eta(\mu_m - b_t) dt + \sigma_{m}\sqrt{2\eta}\, dB_t,
+$${#eq-ou-process}
 
-where $B_t$ is a standard Brownian motion.
+where $B_t$ is a standard Brownian motion. Under this parametrization the stationary distribution of $b_t$ is $\mathcal{N}(\mu_m, \sigma_m^2)$, so $\mu_m$ and $\sigma_m$ have the same interpretation as in the discrete-time AR(1) specification @eq-ar1.
 
 **Value Functions**
 
@@ -125,11 +125,12 @@ $$
 The value functions satisfy the following HJB equations:
 
 $$
-\begin{aligned}
-\rho W &= v(p, w, 1) + \lambda \int_{b^*}^{\infty} V(b') - W \,dF(b'), \\
-\rho V(b) &= v(p, w, 2) + b + \eta(\mu_m - b) \frac{\partial V(b)}{\partial b} + \frac{1}{2}\sigma_m^2 \frac{\partial^2 V(b)}{\partial b^2}.
-\end{aligned}
-$${#eq-hjb}
+\rho W = v(p, w, 1) + \lambda \int_{b^*}^{\infty} V(b') - W \,dF(b'),
+$${#eq-hjb-single}
+
+$$
+\rho V(b) = v(p, w, 2) + b + \eta(\mu_m - b) \frac{\partial V(b)}{\partial b} + \eta\sigma_m^2 \frac{\partial^2 V(b)}{\partial b^2}.
+$${#eq-hjb-married}
 
 The effective discount rate $\rho$ is the sum of the discount rate and the exit rate, $\rho = \tilde{\rho} + \nu$.
 
@@ -139,7 +140,7 @@ The effective discount rate $\rho$ is the sum of the discount rate and the exit 
 The stationary distribution is the solution to the Kolmogorov Forward equation, which is given by
 
 $$
-0 = -\frac{\partial}{\partial b}\left[\eta(\mu_m - b)M(b)\right] + \frac{1}{2}\sigma_m^2 \frac{\partial^2 M(b)}{\partial b^2} + \lambda s f(b) - \nu M(b) \quad \text{for } b > b^*,
+0 = -\frac{\partial}{\partial b}\left[\eta(\mu_m - b)M(b)\right] + \eta\sigma_m^2 \frac{\partial^2 M(b)}{\partial b^2} + \lambda s f(b) - \nu M(b) \quad \text{for } b > b^*,
 $${#eq-kf}
 
 where $M(b)$ is the density of married households with match quality $b$, and $s$ is the mass of single households,

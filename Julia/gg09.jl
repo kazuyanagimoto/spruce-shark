@@ -64,10 +64,6 @@ end
     G::Matrix{TF} = mc.p
     F::Vector{TF} = construct_F(μₛ, σₛ, b_grid)
 
-    # Solution
-    V::Vector{TF} = zeros(n_b)
-    W::Vector{TF} = zeros(1)
-    M::Vector{TF} = zeros(n_b)
 end
 
 crra(x, ζ) = iszero(ζ) ? log(x) : x^ζ / ζ
@@ -114,45 +110,39 @@ function Married(p, w; m::Model)
     return Married(c, h, 2 - h, d, n, v)
 end
 
-function solve(t; m::Model, tol=1e-6, max_iter=1000)
-    (; n_b, b_grid, F, G, β, δ, μₛ, σₛ, μₘ, σₘ, ϱ) = m
+function solve_dt(uₘ, uₛ; m::Model, tol=1e-6, max_iter=1000)
+    (; n_b, b_grid, F, G, β, δ) = m
 
-    AS = Single(fn_p(t; m), fn_w(t; m); m)
-    AM = Married(fn_p(t; m), fn_w(t; m); m)
-
-    # VFI ----------------------------------------------------------------------
+     # VFI ----------------------------------------------------------------------
     dist = Inf
     iter = 0
-    V = similar(m.V)
-    W = similar(m.W)
+    V = zeros(n_b)
+    W = 0.0
+    V′, W′ = similar(V), W
     while dist > tol && iter < max_iter
         for i = 1:n_b
-            V[i] = AM.v + b_grid[i]
+            V′[i] = uₘ + b_grid[i]
             for j in 1:n_b
-                V[i] += β * max(m.V[j], m.W[1]) * G[i, j]
+                V′[i] += β * max(V[j], W) * G[i, j]
             end
         end
-        W = AS.v
+        W′ = uₛ
         for i in 1:n_b
-            W += β * max(V[i], m.W[1]) * F[i]
+            W′ += β * max(V′[i], W) * F[i]
         end
 
-        dist = maximum(abs, (V .- m.V)) + abs(W - m.W[1])
-        m.V .= V
-        m.W[1] = W
+        dist = maximum(abs, (V′ .- V)) + abs(W′ - W)
+        V .= V′
+        W = W′
         iter += 1
     end
-
+    
     # Steady State Distributions -----------------------------------------------
     ι = searchsortedfirst(V, W) # V[ι-1] < W ≤ V[ι]
-    ω = (W - V[ι-1]) / (V[ι] - V[ι-1]) # fraction of bin ι below W
-
-    # Construct transition matrix P of size (n_b + 1) × (n_b + 1)
-    # States 1..n_b = married at b_grid[i], state n_b+1 = single
-    # The threshold bin ι is split by ω: fraction ω → single, (1-ω) → married.
+    ω = (W - V[ι-1]) / (V[ι] - V[ι-1])
     P = zeros(n_b + 1, n_b + 1)
 
-    # Married (column j) → Married/Single
+    ## Married (column j) → Married/Single
     for j in 1:n_b
         for i in (ι+1):n_b
             P[i, j] = G[j, i]
@@ -161,7 +151,7 @@ function solve(t; m::Model, tol=1e-6, max_iter=1000)
         P[n_b+1, j] = sum(G[j, k] for k in 1:(ι-1)) + G[j, ι] * ω
     end
 
-    # Single (column n_b+1) → Married/Single
+    ## Single (column n_b+1) → Married/Single
     for i in (ι+1):n_b
         P[i, n_b+1] = F[i]
     end
@@ -171,18 +161,24 @@ function solve(t; m::Model, tol=1e-6, max_iter=1000)
     prob_marriage = 1 - P[n_b+1, n_b+1]
 
 
-    # Solve M̃ = (1-δ)P M̃ + d where d = (0,...,0,δ)
+    ## Solve M̃ = (1-δ)P M̃ + d where d = (0,...,0,δ)
     M̃ = (I - (1 - δ) * P) \ vcat(zeros(n_b), δ)
-    m.M .= M̃[1:n_b]
     s = M̃[n_b+1]
 
     prob_divorce = sum(P[n_b+1, i] * M̃[i] for i in 1:n_b) / (1 - s)
 
-    return (t=t, s=s, us=AS.v, um=AM.v, pm=prob_marriage, pd=prob_divorce)
+    return (s=s, pm=prob_marriage, pd=prob_divorce)
+end
+
+function simulate_year(t; m::Model)
+    AS = Single(fn_p(t; m), fn_w(t; m); m)
+    AM = Married(fn_p(t; m), fn_w(t; m); m)
+    s, pm, pd = solve_dt(AM.v, AS.v; m)
+    return (t=t, s=s, pm=pm, pd=pd)
 end
 
 function simulate(; m=Model(), years=1950:2000)
-    rows = solve.(years; m)
+    rows = simulate_year.(years; m)
     return DataFrame(rows)
 end
 
@@ -216,8 +212,6 @@ d = Dict("phi" => m.ϕ,
     "Delta_t" => m.Δt)
 YAML.write_file("$dir/gg09.yaml", d)
 
-
-My.solve(1950; m)
 df = My.simulate()
 
 using Plots
