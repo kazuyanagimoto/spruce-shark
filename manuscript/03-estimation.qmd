@@ -1,0 +1,266 @@
+# Estimation
+
+```{r}
+#| label: setup-estimation
+library(tinytable)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+options(tinytable_html_mathjax = TRUE)
+
+targets::tar_config_set(
+  store = here::here("_targets"),
+  script = here::here("_targets.R")
+)
+
+targets::tar_load(c(benchmark, ct, moment, simulation))
+invisible(list2env(targets::tar_read(fn_figure), .GlobalEnv))
+showtext::showtext_auto()
+theme_set(theme_proj())
+```
+
+## Calibration
+
+For calibration, I use the parameter values in @greenwood2009, summarized in @tbl-params-gg09. Some parameters are set from a priori information: $\tilde{\beta} = 0.96$ (convention), $\phi = 0.766$ (OECD equivalence scale), $\theta = 0.206$ and $\kappa = 0.189$ [@mcgrattan1997], and $1/\delta = 47$ (marriageable life span, ages 18--64). The wage $w_{1950}$ is normalized to 1, with a growth rate $\Delta w = 0.022$ matching the real wage trend from the data. The remaining ten parameters, taste parameters $(\alpha, \zeta, \bar{c})$, price parameters $(p_{1950}, \gamma)$, and match quality parameters $(\mu_s, \sigma_s, \mu_m, \sigma_m, \varrho)$, are jointly estimated by minimum distance, targeting 16 data observations across five dimensions: time allocations for married and single households (1950--1990), the fraction married, divorce rate, and marriage rate (1950 and 2000). Importantly, the match quality parameters do not enter the labor supply functions, so they are effectively identified from the vital statistics targets alone.
+
+```{r}
+#| label: tbl-params-gg09
+#| tbl-cap: "**Parameter Values in @greenwood2009**"
+data.frame(
+  tmp = c(
+    "Tastes",
+    "",
+    " Technology",
+    "Life span",
+    "Shocks",
+    "",
+    "Prices",
+    "Wages"
+  ),
+  par = c(
+    "$\\tilde{\\beta}=0.96, \\phi=0.766$",
+    "$\\alpha = 0.278, \\zeta = -1.901, \\overline{c} = 0.131$",
+    "$\\theta = 0.206, \\kappa = 0.189$",
+    "$1/\\delta=47$",
+    "$\\mu_s = -4.252, \\sigma_s^2 = 8.063$",
+    "$\\mu_m = 0.521, \\sigma_m^2 = 0.680, \\varrho = 0.896$",
+    "$p_{1950} = 9.959, \\Delta p = 0.059$",
+    "$w_{1950} = 1.000, \\Delta w = 0.022$"
+  ),
+  desc = c(
+    "Literature",
+    "Estimated",
+    "Literature",
+    "Settings",
+    "Estimated",
+    "Estimated",
+    "Estimated",
+    "Data"
+  )
+) |>
+  setNames(c(" ", "Parameter", "Description")) |>
+  tt() |>
+  style_tt(align = "l")
+```
+
+**Continuous-time Specific Parameters**
+
+I set the Poisson arrival rate $\lambda = 1$ and the model period length $\Delta t = 1$ for the continuous-time model. This choice corresponds exactly to the discrete-time assumption that each single meets one potential partner per period, since the expected number of Poisson arrivals in an interval of length $\Delta t$ is $\lambda\,\Delta t = 1$. Moreover, the HJB equations depend on rates only through their ratios, so the level of $\lambda$ is not separately identified; what matters is the product $\lambda\,\Delta t$. Setting $\lambda = 1/\Delta t$ fixes this product at unity for any $\Delta t$, making the choice of period length immaterial.
+
+The continuous-time method requires additional parameters for the OU process. A naive approach is to set the parameters of the OU process to match the mean and variance of the AR(1) process. However, this approach does not work well in practice because of the *continuous monitoring problem*. In the discrete-time model, the divorce decision is evaluated only once per period: even if the match quality dips below the threshold within the period, the couple remains married as long as the realized end-of-period quality exceeds the threshold. In continuous time, by contrast, the value function is monitored at every instant, so the process can trigger divorce the moment it crosses the threshold---an event that occurs with strictly higher probability. As a result, naively matching the OU parameters $(\mu_m, \sigma_m, \eta)$ to the AR(1) parameters $(\mu_m, \sigma_m, \varrho)$ via the standard mapping $\eta = -\log(\varrho)/\Delta t$ systematically overstates the divorce rate in the continuous-time formulation.
+
+To address this issue, I re-estimate the OU parameters $(\mu_m, \sigma_m, \eta)$ by minimum distance, targeting the fraction married, divorce rate, and marriage rate in 1950 and 2000. The resulting parameter values are reported in @tbl-params-ct alongside the naive AR(1)-matched values from @greenwood2009, and the model fit is shown in @tbl-calibration.
+
+```{r}
+#| label: tbl-params-ct
+#| tbl-cap: "**Additional Parameters for Continuous-time Method**"
+data.frame(
+  par = c("$\\mu_m$", "$\\sigma_m^2$", "$\\eta$"),
+  gg09 = c(0.521, 0.680, -log(0.896)),
+  ct_estimated = c(ct$mu_m, ct$sigma_m^2, ct$eta)
+) |>
+  setNames(c("Parameter", "Greenwood and Guner (2009)", "Estimated")) |>
+  tt(
+    notes = "The Greenwood and Guner (2009) column uses the original values of $\\mu_m$ and $\\sigma_m^2$ and sets $\\eta = -\\log(\\varrho)/\\Delta t$ with $\\varrho = 0.896$ and $\\Delta t = 1$. The Estimated column shows the values re-estimated by minimum distance targeting the fraction married, divorce rate, and marriage rate in 1950 and 2000."
+  ) |>
+  format_tt(j = 2:3, digits = 3) |>
+  style_tt()
+```
+
+The estimated parameters in @tbl-params-ct are consistent with the continuous monitoring effect described above. The mean-reversion speed $\eta$ hardly changes, but $\mu_m$ rises from $0.521$ to $`r sprintf("%.3f", ct$mu_m)`$, shifting the match quality distribution away from the divorce boundary to offset the higher crossing probability under continuous monitoring.
+
+## Results
+
+Following @greenwood2009, I simulate the model from 1950 to 2020 by increasing the wage $w$ and the price of home goods $p$ at constant annual rates ($\Delta w = 0.022$ and $\Delta p = 0.059$; see @tbl-params-gg09). The rising wage raises the opportunity cost of home production, while the falling relative price of home goods makes market substitutes more accessible. Together, these secular trends compress the utility gain from marriage $v(p,w,2) - v(p,w,1)$, as shown in the right panel of @fig-marriage-rate. As the surplus from marriage shrinks, the equilibrium share of married households declines steadily from roughly 80 % in 1950 to below 70 % by 2020 (left panel of @fig-marriage-rate). 
+
+```{r}
+#| label: fig-marriage-rate
+#| fig-cap: "**Replication of Fig. 6 in @greenwood2009**."
+label_married <- simulation |>
+  filter(t == max(t)) |>
+  mutate(y = 1 - s)
+
+p1 <- simulation |>
+  ggplot(aes(x = t, y = 1 - s, color = method, linetype = method)) +
+  geom_line() +
+  ggrepel::geom_text_repel(
+    data = label_married,
+    aes(y = y, label = method),
+    direction = "y",
+    hjust = -0.3,
+    nudge_x = 1,
+    segment.color = NA,
+    show.legend = FALSE,
+    size = 4
+  ) +
+  scale_color_manual(values = c("CT" = color_accent, "DT" = color_accent2)) +
+  scale_linetype_manual(values = c("CT" = "solid", "DT" = "dashed")) +
+  scale_x_continuous(expand = expansion(mult = c(0.02, 0.15))) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = NULL, y = NULL, title = "Share of Married Population") +
+  theme_classic() +
+  theme(
+    legend.position = "none",
+    axis.line = element_line(linewidth = 0.3),
+    axis.ticks = element_line(linewidth = 0.3),
+    strip.background = element_blank(),
+    strip.text = element_text(face = "bold", hjust = 0)
+  )
+
+p2 <- simulation |>
+  filter(method == "CT") |>
+  ggplot(aes(x = t, y = vm - vs)) +
+  geom_line(color = color_accent) +
+  labs(
+    x = NULL,
+    y = latex2exp::TeX("$v(p, w, 2) - v(p, w, 1)$"),
+    title = "Utility Difference"
+  ) +
+  theme_classic() +
+  theme(
+    legend.position = "none",
+    axis.line = element_line(linewidth = 0.3),
+    axis.ticks = element_line(linewidth = 0.3),
+    strip.background = element_blank(),
+    strip.text = element_text(face = "bold", hjust = 0)
+  )
+
+p1 + p2
+```
+
+@fig-marriage-divorce-rate decomposes the decline in the married population into its flow components. Both the divorce rate and the marriage rate exhibit the same broad pattern across the CT and DT formulations: the divorce rate rises while the marriage rate falls, consistent with the shrinking marriage surplus. The CT and DT trajectories track each other closely, confirming that the continuous-time reformulation preserves the aggregate dynamics of the original model.
+
+```{r}
+#| label: fig-marriage-divorce-rate
+#| fig-cap: "**Replication of Fig. 7 in @greenwood2009**."
+sim_long <- simulation |>
+  tidyr::pivot_longer(
+    cols = c(pm, pd),
+    names_to = "variable",
+    values_to = "value"
+  )
+
+label_md <- sim_long |>
+  filter(t == max(t))
+
+sim_long |>
+  ggplot(aes(x = t, y = value, color = method, linetype = method)) +
+  geom_line() +
+  ggrepel::geom_text_repel(
+    data = label_md,
+    aes(label = method),
+    direction = "y",
+    hjust = -0.3,
+    nudge_x = 1,
+    segment.color = NA,
+    show.legend = FALSE,
+    size = 4
+  ) +
+  facet_wrap(
+    ~variable,
+    scales = "free_y",
+    labeller = as_labeller(c(
+      pd = "Divorce Rate",
+      pm = "Marriage Rate"
+    ))
+  ) +
+  labs(x = NULL, y = NULL) +
+  scale_color_manual(values = c("CT" = color_accent, "DT" = color_accent2)) +
+  scale_linetype_manual(values = c("CT" = "solid", "DT" = "dashed")) +
+  scale_x_continuous(expand = expansion(mult = c(0.02, 0.15))) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  theme_classic() +
+  theme(
+    legend.position = "none",
+    axis.line = element_line(linewidth = 0.3),
+    axis.ticks = element_line(linewidth = 0.3),
+    strip.background = element_blank(),
+    strip.text = element_text(face = "bold", hjust = 0)
+  )
+```
+
+**Computational Performance**
+
+Although the CT and DT methods produce nearly identical equilibrium outcomes, their computational costs differ markedly. As discussed in @sec-apdx-comp, the DT method requires constructing and iterating on an $N \times N$ transition matrix, yielding $O(N^2)$ complexity in the number of grid points $N$, whereas the CT method solves tridiagonal systems that scale as $O(N)$. I measure computation time and memory usage with BenchmarkTools.jl [@chen2016] on an Apple M3 Max (16-core, 128 GB RAM). @fig-benchmark plots the results on log--log axes. The DT curves have a slope of approximately 2, and the CT curves have a slope of approximately 1, consistent with the theoretical complexity orders.
+  
+```{r}
+#| label: fig-benchmark
+#| fig-cap: "**Computational Performance of Continuous-Time and Discrete-Time Methods.**"
+benchmark_long <- benchmark |>
+  select(n_b, method, time_median_ms, memory_mb) |>
+  tidyr::pivot_longer(
+    cols = c(time_median_ms, memory_mb),
+    names_to = "metric",
+    values_to = "value"
+  ) |>
+  mutate(
+    metric = factor(
+      metric,
+      levels = c("time_median_ms", "memory_mb"),
+      labels = c("Median time (ms)", "Memory (MB)")
+    )
+  )
+
+label_data <- benchmark_long |>
+  filter(n_b == max(n_b))
+
+benchmark_long |>
+  ggplot(aes(
+    x = n_b,
+    y = value,
+    color = method,
+    shape = method,
+    linetype = method
+  )) +
+  geom_line() +
+  geom_point(size = 2.2) +
+  geom_text(
+    data = label_data,
+    aes(label = method),
+    hjust = -0.4,
+    vjust = 0.5,
+    show.legend = FALSE,
+    size = 4
+  ) +
+  facet_wrap(~metric, scales = "free_y") +
+  scale_x_log10(
+    breaks = unique(benchmark$n_b),
+    labels = unique(benchmark$n_b),
+    expand = expansion(mult = c(0.05, 0.15))
+  ) +
+  scale_y_log10() +
+  scale_color_manual(values = c("CT" = color_accent, "DT" = color_accent2)) +
+  scale_linetype_manual(values = c("CT" = "solid", "DT" = "dashed")) +
+  labs(
+    x = "Number of grid points",
+    y = NULL
+  ) +
+  theme_classic(base_size = 11) +
+  theme(
+    legend.position = "none",
+    axis.line = element_line(linewidth = 0.3),
+    axis.ticks = element_line(linewidth = 0.3),
+    strip.background = element_blank(),
+    strip.text = element_text(face = "bold", hjust = 0)
+  )
+```

@@ -48,10 +48,15 @@ bibliography: references.bib
 ---
 
 {{< include 01-intro.qmd >}}
-{{< include 02-gg09.qmd >}}
+{{< include 02-model.qmd >}}
+{{< include 03-estimation.qmd >}}
+{{< include 04-conclusion.qmd >}}
+
+{{< pagebreak >}}
 
 ```{=latex}
 \appendix
 ```
 
-{{< include 11-apdx-gg09.qmd >}}
+{{< include 11-detail-comp.qmd >}}
+{{< include 12-supplement.qmd >}}

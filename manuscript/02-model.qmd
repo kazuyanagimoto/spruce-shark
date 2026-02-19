@@ -1,19 +1,4 @@
-# Continuos-time Marriage Model
-
-```{r}
-#| label: setup-gg09
-library(tinytable)
-options(tinytable_html_mathjax = TRUE)
-
-targets::tar_config_set(
-  store = here::here("_targets"),
-  script = here::here("_targets.R")
-)
-
-targets::tar_load(c(
-  gg09
-))
-```
+# Marriage Model
 
 To develop a continuous-time search and matching model of marriage, I build on the canonical framework of @greenwood2009. I begin by presenting their discrete-time formulation and then extend it to continuous time.
 
@@ -153,65 +138,6 @@ $${#eq-population-ct}
 
 A stationary equilibrium is a tuple $\{V(b), W, s, M(b)\}$ such that
 
-1. $V(b)$ and $W$ satisfy @eq-hjb
+1. $W$ and $V(b)$ satisfy @eq-hjb-single and @eq-hjb-married with the same marriage/divorce threshold $b^*$, and
 1. $s$ and $M(b)$ is a stationary distribution that satisfies @eq-kf with @eq-population-ct for all $b > b^*$.
 
-## Estimation
-
-```{r}
-#| label: tbl-gg09-params
-#| tbl-cap: "**Parameter Values**."
-data.frame(
-  Parameter = c(
-    "$\\phi$",
-    "$\\alpha$",
-    "$\\zeta$",
-    "$\\overline{c}$",
-    "$\\theta$",
-    "$\\kappa$",
-    "$\\mu_s$",
-    "$\\sigma_s$",
-    "$\\mu_m$",
-    "$\\sigma_m$",
-    # Discrete-time parameters
-    "$\\tilde{\\beta}$",
-    "$\\delta$",
-    "$\\varrho$",
-    # Continuous-time parameters
-    "$\\lambda$",
-    "$\\tilde{\\rho}$",
-    "$\\nu$",
-    "$\\eta$"
-  ),
-  Value = c(
-    gg09$phi,
-    gg09$alpha,
-    gg09$zeta,
-    gg09$c_bar,
-    gg09$theta,
-    gg09$kappa,
-    gg09$mu_s,
-    gg09$sigma_s,
-    gg09$mu_m,
-    gg09$sigma_m,
-    # Discrete-time Parameters
-    gg09$beta_tilde,
-    gg09$delta,
-    gg09$varrho,
-    # Continuous-time Parameters
-    gg09$lambda,
-    gg09$rho_tilde,
-    gg09$nu,
-    gg09$eta
-  )
-) |>
-  tt() |>
-  format_tt(digits = 2, num_zero = TRUE) |>
-  group_tt(
-    i = list(
-      "Common Parameters" = 1,
-      "Discrete-time" = 11,
-      "Continuous-time" = 14
-    )
-  )
-```

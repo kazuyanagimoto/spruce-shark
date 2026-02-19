@@ -8,9 +8,12 @@ book:
   chapters:
     - index.qmd
     - 01-intro.qmd
-    - 02-gg09.qmd
+    - 02-model.qmd
+    - 03-estimation.qmd
+    - 04-conclusion.qmd
   appendices:
-    - 11-apdx-gg09.qmd
+    - 11-detail-comp.qmd
+    - 12-supplement.qmd
     - references.qmd
 
 bibliography: references.bib
@@ -29,3 +32,14 @@ execute:
   message: false
   warning: false
 
+crossref:
+  eq-prefix: "Eq."
+
+knitr:
+  opts_chunk: 
+    fig.align: center
+    fig.retina: 3
+    fig.width: 6
+    fig.height: 3
+    out.width: 90%
+    collapse: true

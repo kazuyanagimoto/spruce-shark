@@ -14,6 +14,7 @@ tar_config_set(
 
 tar_source()
 tar_plan(
+  tar_figure,
   tar_data,
   tar_model
 )
