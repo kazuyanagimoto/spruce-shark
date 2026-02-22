@@ -2,13 +2,24 @@ project:
   type: book
 
 book:
-  title: "manuscript"
-  author: "Norah Jones"
+  title: Marriage and Divorce in Continuous Time
+  author:
+  - name: Kazuharu Yanagimoto
+    email: yanagimoto@econ.kobe-u.ac.jp
+    orcid: 0009-0007-1967-8304
+    affiliations:
+    - name: Kobe University
   date: "2/16/2026"
   chapters:
-    - index.qmd
+    - text: Home
+      file: index.qmd
     - 01-intro.qmd
-    - 02-gg09.qmd
+    - 02-model.qmd
+    - 03-estimation.qmd
+    - 04-conclusion.qmd
+  appendices:
+    - 11-detail-comp.qmd
+    - 12-supplement.qmd
     - references.qmd
 
 bibliography: references.bib
@@ -18,8 +29,22 @@ format:
     theme:
       - cosmo
       - brand
-  pdf:
-    documentclass: scrreprt
+    lightbox: true
 
+execute:
+  freeze: auto
+  echo: false
+  message: false
+  warning: false
 
+crossref:
+  eq-prefix: "Eq."
 
+knitr:
+  opts_chunk: 
+    fig.align: center
+    fig.retina: 3
+    fig.width: 6
+    fig.height: 3
+    out.width: 90%
+    collapse: true

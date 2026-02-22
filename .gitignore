@@ -47,3 +47,9 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Others
+.vscode/
+.DS_Store
+Manifest.toml
+

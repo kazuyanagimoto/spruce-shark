@@ -1,0 +1,194 @@
+# Computational Details {#sec-apdx-comp}
+
+## Discrete-time Model
+
+Computation of the discrete-time model proceeds in three steps: (i) household allocation, (ii) value function iteration, and (iii) stationary distributions. Since the household allocation is a static problem, the indirect utility functions $v(p, w, 1)$ and $v(p, w, 2)$ need only be computed once for each set of prices.
+
+The match quality $b$ is discretized on an equally spaced grid $\{b_1, \dots, b_N\}$ with $N$ points. The value function $V(b)$ evaluated at each grid point is collected into a vector $\mathbf{V} = (V_1, \dots, V_N)^{\top}$. The transition kernel of match quality during marriage, $G(b'|b)$, is approximated by an $N \times N$ row-stochastic matrix $\mathbf{G}$ using @tauchen1986's method, where $G_{j,i} \approx \Pr(b' \in \text{bin } i \mid b = b_j)$. Similarly, the distribution of match quality for new encounters, $F(b)$, is discretized into a probability vector $\mathbf{F} = (F_1, \dots, F_N)^{\top}$ with $F_i = \Pr(b \in \text{bin } i)$.
+
+### Value Functions {.unnumbered}
+
+The discretized Bellman equations are
+
+$$
+\begin{aligned}
+\mathbf{V} &= v(p, w, 2) + \mathbf{b} + \beta \, \mathbf{G} \max\{\mathbf{V}, W\},\\
+W &= v(p, w, 1) + \beta \, \mathbf{F}^{\top} \max\{\mathbf{V}, W\},
+\end{aligned}
+$$
+where $\mathbf{b} = (b_1, \dots, b_N)^{\top}$ is the grid vector and $\max\{\mathbf{V}, W\}$ is taken element-wise. These equations are solved by standard value function iteration (VFI).
+
+::: {#alg-vfi}
+
+## Value Function Iteration
+
+1. Initialize $\mathbf{V}$ from a heuristic guess and $W \leftarrow v(p, w, 1)/(1-\beta)$.
+2. Update $\mathbf{V}$ and $W$ simultaneously using the Bellman equations above until $\|\mathbf{V}^{n+1} - \mathbf{V}^n\|_\infty < \varepsilon$ and $|W^{n+1} - W^n| < \varepsilon$.
+
+:::
+
+### Stationary Distributions {.unnumbered}
+
+The stationary distribution is characterized by an $(N+1)$-dimensional state vector, where states $1, \dots, N$ represent married households at each grid point and state $N+1$ represents singles. Let $\mathbf{M} = (M_1, \dots, M_N)^{\top}$ denote the mass of married households at each grid point and $s$ the mass of singles. With the exit rate $\delta$, the stationarity condition is
+
+$$
+\begin{pmatrix}
+\mathbf{M} \\
+s
+\end{pmatrix} = (1-\delta)\,\mathbf{P} \begin{pmatrix}\mathbf{M} \\
+s
+\end{pmatrix} + \begin{pmatrix}\mathbf{0} \\ \delta
+\end{pmatrix},
+$$
+where $\mathbf{P}$ is the $(N+1) \times (N+1)$ column-stochastic transition matrix defined below. This linear system has the closed-form solution
+
+$$
+\begin{pmatrix}\mathbf{M} \\
+s
+\end{pmatrix} = \left(\mathbf{I} - (1-\delta)\,\mathbf{P}\right)^{-1} \begin{pmatrix}\mathbf{0} \\ \delta
+\end{pmatrix}.
+$$
+
+Since $V(b)$ is increasing in $b$, there exists a threshold index $\iota$ such that
+
+$$
+V_{\iota-1} < W < V_{\iota}.
+$$
+Households with match quality above this threshold prefer marriage; those below prefer being single. To handle the fact that the threshold generally falls between grid points, I split the bin $\iota$ using the interpolation weight
+
+$$
+\omega = \frac{W - V_{\iota-1}}{V_{\iota} - V_{\iota-1}} \in [0, 1].
+$$
+A fraction $\omega$ of bin $\iota$ is assigned to the divorce/single state, and the remaining fraction $1 - \omega$ stays in the married state. The entries of $\mathbf{P} = \{P_{i,j}\}$ are
+
+$$
+P_{i, j} = \begin{cases}
+G_{j, i} & i > \iota, \quad 1 \leq j \leq N \\
+G_{j, \iota}\, (1 - \omega) & i = \iota, \quad 1 \leq j \leq N \\
+\displaystyle\sum_{k=1}^{\iota-1} G_{j, k} + G_{j, \iota}\, \omega & i = N+1, \quad 1 \leq j \leq N \\[6pt]
+F_{i} & i > \iota, \quad j = N+1 \\
+F_{\iota}\, (1 - \omega) & i = \iota, \quad j = N+1 \\
+\displaystyle\sum_{k=1}^{\iota-1} F_{k} + F_{\iota}\, \omega & i = N+1, \quad j = N+1 \\[6pt]
+0 & \text{otherwise.}
+\end{cases}
+$$
+Each column sums to one by construction, since $\sum_{i=1}^{N} G_{j,i} = 1$ and $\sum_{i=1}^{N} F_i = 1$.
+
+
+## Continuous-time Model {#sec-comp-ct}
+
+Computation of the continuous-time model follows @achdou2022 and proceeds in three steps: (i) finite difference discretization of the Ornstein--Uhlenbeck (OU) generator, (ii) solving the HJB equation with a variational inequality for endogenous divorce, and (iii) solving the Kolmogorov Forward equation for the stationary distribution.
+
+As in the discrete-time case, the match quality $b$ is discretized on a uniform grid $\{b_1, \dots, b_N\}$ with spacing $\Delta b = b_{i} - b_{i-1}$, centered at $\mu_m$ and spanning $\pm n_{\text{std}} \cdot \sigma_m$ standard deviations of the OU stationary distribution. Value functions evaluated at the grid are collected into vectors $\mathbf{V} = (V_1, \dots, V_N)^{\top}$.
+
+### OU Operator {.unnumbered}
+
+The OU process @eq-ou-process has drift $\eta(\mu_m - b)$ and diffusion coefficient $\eta\sigma_m^2$. Its infinitesimal generator, which appears as the differential operator on the right-hand side of the married HJB @eq-hjb-married, is discretized into a sparse $N \times N$ matrix $\mathbf{A}$ using an upwind scheme for the drift and central differences for the diffusion. Denoting the drift at each grid point by $d_i = \eta(\mu_m - b_i)$, the entries are
+
+$$
+A_{i,j} = \begin{cases}
+d_i^{+}/\Delta b + \eta\sigma_m^2 / \Delta b^2 & j = i + 1, \\
+-d_i^{-}/\Delta b + \eta\sigma_m^2 / \Delta b^2 & j = i - 1, \\
+-(A_{i,i-1} + A_{i,i+1}) & j = i, \\
+0 & \text{otherwise},
+\end{cases}
+$$
+for interior points $i = 2, \dots, N-1$, where $d_i^{+} = \max(d_i, 0)$ and $d_i^{-} = \min(d_i, 0)$ denote the positive and negative parts of the drift. The upwind scheme selects the forward difference when the drift is positive ($b_i < \mu_m$) and the backward difference when it is negative ($b_i > \mu_m$), ensuring monotonicity of the scheme. At the boundaries $i = 1$ and $i = N$, one-sided differences with reflecting conditions are imposed.
+
+The resulting matrix $\mathbf{A}$ is tridiagonal, so all linear systems involving $\mathbf{A}$ can be solved in $O(N)$ time via sparse LU factorization.
+
+### Value Functions {.unnumbered}
+
+Evaluating the married HJB @eq-hjb-married at each grid point and replacing the derivatives with the finite difference operator $\mathbf{A}$ gives the system
+
+$$
+\rho\,\mathbf{V} = \mathbf{u}_m + \mathbf{A}\,\mathbf{V},
+$$
+where $\mathbf{u}_m = (v(p, w, 2) + b_1, \dots, v(p, w, 2) + b_N)^{\top}$ is the flow utility vector. Rather than inverting $(\rho\,\mathbf{I} - \mathbf{A})$ directly, an implicit time-stepping scheme is used to handle the variational inequality $V(b) \geq W$. Introducing a pseudo-time step $\Delta > 0$,
+
+$$
+\frac{\mathbf{V}^{n+1} - \mathbf{V}^n}{\Delta} = \mathbf{u}_m + \mathbf{A}\,\mathbf{V}^{n+1} - \rho\,\mathbf{V}^{n+1}.
+$$
+It rearranges to
+
+$$
+V^{n+1} = \mathbf{B}^{-1}\underbrace{\left(\mathbf{u}_m + \frac{1}{\Delta}\,\mathbf{V}^n\right)}_{\mathbf{r}^n},
+$$
+where $\mathbf{B} = \left(\frac{1}{\Delta} + \rho\right)\mathbf{I} - \mathbf{A}$ is a tridiagonal matrix. Since $\mathbf{B}$ does not depend on $\mathbf{V}$ or $W$, its sparse LU factorization is computed once before the iteration begins.
+
+The single's value $W$ satisfies @eq-hjb-single, which rearranges to
+
+$$
+W = \frac{v(p, w, 1) + \lambda \int_{b^*}^\infty V(b)\,f(b)\,db}{\rho + \lambda (1 - F(b^*))},
+$$
+where $F(\cdot)$ and $f(\cdot)$ are the CDF and PDF of the singles' draw distribution $\mathcal{N}(\mu_s, \sigma_s^2)$. To avoid grid-snapping, I use the *unclamped* solution $\widetilde{\mathbf{V}} = \mathbf{B}^{-1}\mathbf{r}$ computed before the VI projection $\max\{\cdot, W\}$. Since $\widetilde{V}(b)$ is increasing, there exists a threshold index $\iota$ such that $\widetilde{V}_{\iota-1} < W < \widetilde{V}_\iota$, and the interpolation weight is
+
+$$
+\omega = \frac{W - \widetilde{V}_{\iota-1}}{\widetilde{V}_{\iota} - \widetilde{V}_{\iota-1}} \in [0, 1].
+$$
+
+The divorce threshold is then $b^* = b_{\iota-1} + \omega\,\Delta b$. The acceptance probability is computed as $1 - F(b^*)$, and the conditional expectation is approximated by linearly interpolating at the boundary cell:
+
+$$
+\int_{b^*}^\infty V(b)\,f(b)\,db \;\approx\; (1 - \omega)\,V_{\iota-1}\,f(b_{\iota-1})\,\Delta b + \sum_{k=\iota}^{N} V_k\,f(b_k)\,\Delta b.
+$$
+
+The algorithm uses a nested loop structure.^[Unlike the DT Bellman operator, the CT implicit scheme combined with the variational inequality is not a contraction mapping when $W$ varies simultaneously with $\mathbf{V}$. Fixing $W$ in the inner loop restores monotone convergence of $\mathbf{V}$. @mellior2024 solve related optimal stopping problems in HACT models using the splitting method and linear complementarity. The marriage model here requires a different approach, an inner--outer decomposition, because the single's value $W$ depends endogenously on $\mathbf{V}$.] The outer loop updates $W$ with damping, and the inner loop solves the married HJB to convergence for a given $W$:
+
+::: {#alg-hjb}
+
+## HJB iteration with variational inequality
+
+1. Initialize $W \leftarrow v(p, w, 1)/\rho$ and $\mathbf{V}$ from a heuristic guess.
+2. **Inner loop** (holding $W$ fixed): repeat until $\|\mathbf{V}^{n+1} - \mathbf{V}^n\|_\infty < \varepsilon$:
+   a. Form $\mathbf{r}^n = \mathbf{u}_m + \frac{1}{\Delta}\,\mathbf{V}^{n}$ and compute the unclamped solution $\widetilde{\mathbf{V}}^{n+1} = \mathbf{B}^{-1}\,\mathbf{r}^n$, which costs $O(N)$.
+   b. Project: $V_i^{n+1} \leftarrow \max\{\widetilde{V}_i^{n+1},\, W\}$ for all $i$.
+3. **Outer update**: locate $b^*$ from the unclamped $\widetilde{\mathbf{V}}$ via linear interpolation,  update $W^{\text{new}}$, and dampen $W \leftarrow \tfrac{1}{2}W^{\text{new}} + \tfrac{1}{2}W$.
+4. Repeat steps 2--3 until $|W^{\text{new}} - W| < \varepsilon$.
+
+:::
+
+### Stationary Distribution {.unnumbered}
+
+The stationary distribution solves the KFE @eq-kf subject to the population constraint @eq-population-ct. The threshold $b^* = b_{\iota-1} + \omega\,\Delta b$ lies between grid points $b_{\iota-1}$ and $b_\iota$. Rather than solving a single KFE with a fractionally weighted boundary cell, I solve *two* KFEs at the adjacent clean grid boundaries and linearly interpolate the resulting singles fractions.
+
+For a given starting index $j \in \{\iota - 1, \iota\}$, define the continuation grid $\{b_j, b_{j+1}, \dots, b_N\}$ with an absorbing boundary at $b_j$. The KFE operator restricted to this grid is the tridiagonal matrix
+
+$$
+\mathbf{T}_j = \mathbf{A}_j^\top - \nu\,\mathbf{I},
+$$
+where $\mathbf{A}_j$ is the submatrix of $\mathbf{A}$ on the continuation grid, and $\mathbf{f}_j = \bigl(f(b_j),\, f(b_{j+1}),\, \dots,\, f(b_N)\bigr)^\top$ is the restricted singles' density. No entries are rescaled; the boundary falls exactly on a grid point. The KFE and population constraint combine into
+
+$$
+\begin{pmatrix}
+\mathbf{T}_j & \lambda\,\mathbf{f}_j \\
+\Delta b\,\mathbf{1}^\top & 1
+\end{pmatrix}
+\begin{pmatrix}
+\mathbf{M}_j \\
+s_j
+\end{pmatrix} =
+\begin{pmatrix}
+\mathbf{0} \\
+1
+\end{pmatrix},
+$${#eq-kf-population}
+which is solved via the Schur complement. Let $\mathbf{z}_j = \mathbf{T}_j^{-1}\mathbf{f}_j$ (a single tridiagonal solve). Then
+
+$$
+s_j = \frac{1}{1 - \lambda\,\Delta b\,\sum_i z_{j,i}}.
+$$
+
+The two solves yield $s_{\iota-1}$ (larger continuation region, lower $s$) and $s_{\iota}$ (smaller continuation region, higher $s$). The interpolated singles fraction is
+
+$$
+s = (1 - \omega)s_{\iota-1} + \omega\,s_{\iota}.
+$$
+
+Because each solve uses an unmodified tridiagonal system, the solution varies smoothly in the grid size $N$ and in $b^*$. The fractional-weighting approach of scaling a boundary row by $(1-\omega)$ introduces a discontinuity whenever the threshold index $\iota$ jumps, since the matrix dimension changes discretely; the two-solve interpolation avoids this artifact. The cost is two $O(N)$ tridiagonal solves instead of one, which is negligible compared to the HJB iteration.
+
+## Computational Complexity {#sec-comp-complexity}
+
+The key difference in computational cost between the two methods stems from how the match quality transition is represented. In the discrete-time model, the Tauchen approximation produces a dense $N \times N$ row-stochastic matrix $\mathbf{G}$. Each VFI iteration requires the matrix-vector product $\mathbf{G}\max\{\mathbf{V}, W\}$, which costs $O(N^2)$. The stationary distribution involves the same dense matrix through the transition matrix $\mathbf{P}$, so the overall complexity of the discrete-time solver is $O(N^2)$.
+
+In the continuous-time model, the upwind finite difference discretization of the OU generator produces a tridiagonal matrix $\mathbf{A}$, so the implicit matrix $\mathbf{B} = \bigl(\frac{1}{\Delta} + \rho\bigr)\mathbf{I} - \mathbf{A}$ is also tridiagonal. Its sparse LU factorization is computed once and reused across all HJB iterations, each of which costs $O(N)$. The KFE requires two additional $O(N)$ tridiagonal solves. The overall complexity of the continuous-time solver is therefore $O(N)$ in the grid size.

@@ -1,0 +1,3 @@
+main:
+  script: /Users/kazuharu/github/spruce-shark/_targets.R
+  store: /Users/kazuharu/github/spruce-shark/_targets
