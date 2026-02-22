@@ -1,36 +1,39 @@
 ---
-title: Marriage and Divorce Dynamics
-subtitle: A Continuous-time Approach
+title: Marriage and Divorce in Continuous Time
 author:
   - name: Kazuharu Yanagimoto
     email: yanagimoto@econ.kobe-u.ac.jp
     orcid: 0009-0007-1967-8304
     affiliations:
     - name: Kobe University
-date: today
+    url: https://kazuyanagimoto.com/
+date: 2026-02-22
 date-format: full
 custom-keywords:
   - name: JEL Codes
-    values: [J12, J13, D13]   
+    values: [C63, D13, J12]
+  - name: Keywords
+    values: [Marriage and Divorce, Continuous Time, Search and Matching]
 thanks: |
-    Thanks
+    This work was supported by JSPS KAKENHI Grant Number 25K23111.
+filters:
+  - abstract-section
+  - _extensions/custom-keywords/custom-keywords.lua
 format:
-  pdf:
-    date-format: long
-    number-sections: true
-    cite-method: natbib
-    documentclass: scrartcl
-    papersize: letter
-    fontsize: 11pt
+  hikmah-pdf:
+    pdf-engine: pdflatex
     geometry:
-      - margin=1in
+      - top=1in
+      - bottom=1in
+      - left=1in
+      - right=1in
     linestretch: 1.25
-    include-in-header: preamble.tex
-    biblio-style: chicago
-    colorlinks: true
+    number-sections: true
     linkcolor: coloraccent
     urlcolor: coloraccent
     citecolor: coloraccent
+    include-in-header: preamble.tex
+    code-repo: "Access the code, data, and analysis at <https://github.com/kazuyanagimoto/spruce-shark>"
 execute: 
   freeze: auto
   echo: false
@@ -44,9 +47,13 @@ knitr:
     fig.height: 3
     out.width: 90%
     collapse: true
+    dev: pdf
 bibliography: references.bib
+crossref:
+  eq-prefix: "Eq."
 ---
 
+{{< include 00-abstract.qmd >}}
 {{< include 01-intro.qmd >}}
 {{< include 02-model.qmd >}}
 {{< include 03-estimation.qmd >}}
@@ -56,7 +63,24 @@ bibliography: references.bib
 
 ```{=latex}
 \appendix
+\renewcommand{\thetable}{\Alph{section}.\arabic{table}}
+\setcounter{table}{0}
+\renewcommand{\thefigure}{\Alph{section}.\arabic{figure}}
+\setcounter{figure}{0}
+
+\begin{center}
+{\huge\sffamily\bfseries Appendix}
+\end{center}
+\vspace{1em}
 ```
 
 {{< include 11-detail-comp.qmd >}}
+
 {{< include 12-supplement.qmd >}}
+
+{{< pagebreak >}}
+
+# References {.unnumbered}
+
+::: {#refs}
+:::

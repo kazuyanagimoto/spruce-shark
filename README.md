@@ -1,5 +1,28 @@
-# Spruce Shark
+# Marriage and Divorce in Continuous Time
 
+
+## Replication
+
+### Simple replication (Julia Only)
+
+1.  Resotre the Julia environment with `julia --project=.` and
+    `] instantiate`
+2.  Run `julia --project=. Julia/estimation.jl` to replicate the main
+    results in the paper. The output will be saved in `output/`.
+3.  Run `julia --project=. Julia/benchmark.jl` to replicate the
+    computational benchmarks. The output will be saved in `output/`.
+
+### Full replication (Julia, R, and Quarto)
+
+1.  Resotre the Julia environment with `julia --project=.` and
+    `] instantiate`
+2.  Set `PATH=to/julia/bin:$PATH` in `.Renviron` to make the Julia
+    executable available to R
+3.  Restore the R environment with `renv::restore()`
+4.  Run `targets::tar_make()` to execute the full pipeline, including
+    estimation, figure and table generation, and the manuscript
+    rendering. The manuscript will be saved as
+    `manuscript/spruce_shark_yanagimoto.pdf`.
 
 ## Why is this project named “Spruce Shark”?
 
@@ -20,3 +43,11 @@ codename(seed = 260216, type = "ubuntu")
 ```
 
     [1] "spruce shark"
+
+## Licenses
+
+**Text and figures:** All prose and images in the manuscript are
+copyright of the author. The arXiv preprint is distributed under the
+arXiv license terms.
+
+**Code:** All code is licensed under the [MIT License](LICENSE.md).

@@ -1,19 +1,18 @@
-# Marriage Model
+# Model {#sec-model}
 
 To develop a continuous-time search and matching model of marriage, I build on the canonical framework of @greenwood2009. I begin by presenting their discrete-time formulation and then extend it to continuous time.
 
 ## Discrete-time Model
 
-Economy is populated by a continuum of infinitely-lived households. Each household has a marital status, single or married. In each period, each single  meets a potential partner with a match quality $b \in \mathcal{B}$.^[This match quality $b$ is also called "bliss shock" in @greenwood2009.] They marry if the expected value of being married exceeds that of being single. Each married household receives a flow utility $b$ from the match quality, and can divorce at any time. The match quality evolves stochastically over time, and households make their decisions based on the current match quality and the expected future values. At the end of each period, households exit the economy with probability $\delta$, and new households (of which mass is $\delta$) enter the economy as singles.
+The economy is populated by a continuum of infinitely-lived households. Each household has a marital status, single or married. In each period, each single meets a potential partner with a match quality $b \in \mathcal{B}$.^[This match quality $b$ is also called "bliss shock" in @greenwood2009.] They marry if the expected value of being married exceeds that of being single. Each married household receives a flow utility $b$ from the match quality, and can divorce at any time. The match quality evolves stochastically over time, and households make their decisions based on the current match quality and the expected future values. At the end of each period, households exit the economy with probability $\delta$, and new households (whose mass is $\delta$) enter the economy as singles.
 
-**Household Allocation**
+### Household Allocation{.unnumbered}
 
-Let $z \in \{1, 2\}$ denote the number of adults in the household, i.e., $z = 1$ for singles and $z = 2$ for married household. Each household is endowed with $z$ unit of time, which can be allocated to market work $l$ and home hours $h$. Household obtain utility from consumption $c$ and home production $n$, which is a composite good from home goods $d$ and home hours $h$. The household's problem is given by
+Let $z \in \{1, 2\}$ denote the number of adults in the household, i.e., $z = 1$ for singles and $z = 2$ for married household. Each household is endowed with $z$ units of time, which can be allocated to market work $l$ and home hours $h$. Households obtain utility from consumption $c$ and home production $n$, which is a composite good from home goods $d$ and home hours $h$. The household's problem is given by
 
 $$
 \max_{c, d, h} \alpha \log \left(\frac{c - \overline{c}}{z^\phi}\right) + \frac{1-\alpha}{\zeta} \left(\frac{n}{z^{\phi}}\right)^{\zeta}
 $${#eq-utility-dt}
-
 subject to
 
 $$
@@ -22,28 +21,23 @@ c + wpd &= w(z-h) \\
 n & = \left(\theta d^{\kappa} + (1-\theta)h^{\kappa}\right)^{\frac{1}{\kappa}},
 \end{aligned}
 $$
+where $w$ is the wage rate and $p$ is the price of home goods (relative to the wage). The parameter $\overline{c}$ is the minimum consumption level, and $\phi$ captures the scale effect of household size on utility. The parameter $\kappa$ captures the substitutability between home goods and home hours in home production, and $\theta$ is the share of home goods in home production. The indirect utility function of @eq-utility-dt is denoted by $v(p, w, z)$.
 
-where $w$ is the wage rate and $p$ is the price of home goods (relative to the wage). The $\overline{c}$ is the minium consumption level, and $\phi$ captures the scale effect of household size on utility. The parameter $\kappa$ captures the substitutability between home goods and home hours in home production, and the $\theta$ is the share of home goods in home production.
-
-The indirect utility function of @eq-utility-dt is denoted by $v(p, w, z)$.
-
-**Match Quality**
+### Match Quality {.unnumbered}
 
 Single households meet potential partners with match quality $b$ drawn from a normal distribution:
 
 $$
 b \sim \mathcal{N}(\mu_s, \sigma_s^2),
 $${#eq-dist-match-single}
-
 where $\mu_s$ and $\sigma_s^2$ are the mean and variance of the match quality of singles. The cumulative distribution function of the match quality of singles is denoted by $F(b)$. The match quality of married households evolves according to an AR(1) process:
 
 $$
 b = (1-\varrho)\mu_m + \varrho b_{-1} + \sigma_{m}\sqrt{1-\varrho^2}\xi, \quad \xi \sim \mathcal{N}(0, 1).
 $${#eq-ar1}
-
 The cumulative distribution function of the match quality of married households is denoted by $G(b'|b)$.
 
-**Value Functions**
+### Value Functions {.unnumbered}
 
 The value functions of married and single households, denoted by $V(b)$ and $W$, are given by
 
@@ -56,52 +50,50 @@ $${#eq-bellman-dt}
 
 The effective discount rate $\beta := \tilde{\beta} (1 - \delta)$ is the product of the discount factor $\tilde{\beta}$ and the survival probability $1 - \delta$. The household chooses to marry if $V(b) \geq W$ and remains single otherwise. Married households choose to divorce if $V(b) < W$ and remain married otherwise.
 
-**Stational Distribution**
+### Stationary Distribution {.unnumbered}
 
-Let $s_{-1}$ and $\mu_{-1}(b)$ be the density of singles and married households with match quality $b$ in the previous period. Then, the density of singles and married households with match quality $b$ in the current period, denoted by $s$ and $M(b)$, are given by
+Let $s_{-1}$ and $M_{-1}(b)$ be the density of singles and married households with match quality $b$ in the previous period. Then, the density of singles and married households with match quality $b$ in the current period, denoted by $s$ and $M(b)$, are given by
 
 $$
 \begin{aligned}
 s &= \delta + (1-\delta)s_{-1}\int_{\mathcal{B}} \mathbb{1}\left\{V(b) < W\right\} \,dF(b)\\
-& + (1-\delta)(1-s_{-1})\int_{\mathcal{B}}\int_{\mathcal{B}}^{b} \mathbb{1}\left\{V(b') < W\right\} \,dG(b'|b_{-1})\,d\mu_{-1}(b_{-1}),\\
+& + (1-\delta)(1-s_{-1})\int_{\mathcal{B}}\int_{\mathcal{B}}^{b} \mathbb{1}\left\{V(b') < W\right\} \,dG(b'|b_{-1})\,dM_{-1}(b_{-1}),\\
 M(b) &= (1-\delta)s_{-1}\int_{\mathcal{B}}^{b} \mathbb{1}\left\{V(b') \geq W\right\} \,dF(b')\\
-& + (1-\delta)(1-s_{-1})\int_{\mathcal{B}}\int_{\mathcal{B}}^{b}\mathbb{1}\left\{V(b') \geq W\right\} \,dG(b'|b_{-1})\,d\mu_{-1}(b_{-1}).
+& + (1-\delta)(1-s_{-1})\int_{\mathcal{B}}\int_{\mathcal{B}}^{b}\mathbb{1}\left\{V(b') \geq W\right\} \,dG(b'|b_{-1})\,dM_{-1}(b_{-1}).
 \end{aligned}
 $${#eq-stationary-dt}
 
-The stationary distribution is the fixed point of @eq-stationary-dt, i.e., $s = s_{-1}$ and $M(b) = \mu_{-1}(b)$ for all $b \in \mathcal{B}$.
+The stationary distribution is the fixed point of @eq-stationary-dt, i.e., $s = s_{-1}$ and $M(b) = M_{-1}(b)$ for all $b \in \mathcal{B}$.
 
-**Equilibrium**
+### Equilibrium {.unnumbered}
 
-To close the model, the production side is defined as a linear technlogy, $y = wl$. The price of home goods $p$ is exogenously given. A stationary equilibrium is a tuple $\{V(b), W, s, M(b)\}$ such that
+To close the model, the production side is defined as a linear technology, $y = wl$. The price of home goods $p$ is exogenously given. A stationary equilibrium is a tuple $\{V(b), W, s, M(b)\}$ such that
 
 1. $V(b)$ and $W$ satisfy @eq-bellman-dt
-1. $s$ and $M(b)$ is a stationary distribution that satisfies @eq-stationary-dt with $s = s_{-1}$ and $M(b) = \mu_{-1}(b)$ for all $b \in \mathcal{B}$.
+1. $s$ and $M(b)$ constitute a stationary distribution satisfying @eq-stationary-dt with $s = s_{-1}$ and $M(b) = M_{-1}(b)$ for all $b \in \mathcal{B}$.
 
 
 ## Continuous-time Model
 
-Consider a continuous-time version of the model. While the household allocation are the same as in the discrete-time model, the timing of events is different. In continuous time, households exit the economy with a constant hazard rate $\nu$, and new households enter the economy as singles with the same hazard rate $\nu$. Each single household meets potential partners with a Poisson arrival rate $\lambda$, and the match quality is drawn from the same distribution as in the discrete-time model. The match quality of married households evolves according to an Orenstein-Uhlenbeck (OU) process. The value functions satisfy Hamilton-Jacobi-Bellman (HJB) equations, and the stationary distribution is the solution to the Kolmogorov Forward (KF) equation.
+Consider a continuous-time version of the model. While the household allocation is the same as in the discrete-time model, the timing of events is different. In continuous time, households exit the economy with a constant hazard rate $\nu$, and new households enter the economy as singles with the same hazard rate $\nu$. Each single household meets potential partners with a Poisson arrival rate $\lambda$, and the match quality is drawn from the same distribution as in the discrete-time model. The match quality of married households evolves according to an Ornstein--Uhlenbeck (OU) process. The value functions satisfy Hamilton-Jacobi-Bellman (HJB) equations, and the stationary distribution is the solution to the Kolmogorov Forward (KF) equation.
 
-**Match Quality**
+### Match Quality {.unnumbered}
 
-Single households meet potential partners with Poisson arrival rate $\lambda$, and the match quality $b_t$ is drawn from a normal distribution @eq-dist-match-single, of which CDF and PDF is $F(b)$ and $f(b)$. The match quality of married households evolves according to an OU process:
+Single households meet potential partners with Poisson arrival rate $\lambda$, and the match quality $b_t$ is drawn from a normal distribution @eq-dist-match-single, whose CDF and PDF are $F(b)$ and $f(b)$. The match quality of married households evolves according to an OU process:
 
 $$
 d b_t = \eta(\mu_m - b_t) dt + \sigma_{m}\sqrt{2\eta}\, dB_t,
 $${#eq-ou-process}
+where $B_t$ is a standard Brownian motion. Under this parametrization, the stationary distribution of $b_t$ is $\mathcal{N}(\mu_m, \sigma_m^2)$, so $\mu_m$ and $\sigma_m$ have the same interpretation as in the discrete-time AR(1) specification @eq-ar1.
 
-where $B_t$ is a standard Brownian motion. Under this parametrization the stationary distribution of $b_t$ is $\mathcal{N}(\mu_m, \sigma_m^2)$, so $\mu_m$ and $\sigma_m$ have the same interpretation as in the discrete-time AR(1) specification @eq-ar1.
+### Value Functions {.unnumbered}
 
-**Value Functions**
-
-Let $V(b)$ and $W$ be the value functions of married and single households. Single households choose to marry if $V(b) \geq W$ and remain single otherwise. Married households choose to divorce if $V(b) < W$ and remain married otherwise. This implies the following variation inequality:
+Let $V(b)$ and $W$ be the value functions of married and single households. Single households choose to marry if $V(b) \geq W$ and remain single otherwise. Married households choose to divorce if $V(b) < W$ and remain married otherwise. This implies the following variational inequality:
 
 $$
 V(b) \geq W \quad \text{for all }b \in \mathcal{B},
 $$
-
-which define an endogenous marriage/divorce threshold:
+which defines an endogenous marriage/divorce threshold:
 
 $$
 b^* = \inf\{b \in \mathcal{B} : V(b) \geq W\}.
@@ -120,24 +112,23 @@ $${#eq-hjb-married}
 The effective discount rate $\rho$ is the sum of the discount rate and the exit rate, $\rho = \tilde{\rho} + \nu$.
 
 
-**Stationary Distribution**
+### Stationary Distribution {.unnumbered}
 
 The stationary distribution is the solution to the Kolmogorov Forward equation, which is given by
 
 $$
 0 = -\frac{\partial}{\partial b}\left[\eta(\mu_m - b)M(b)\right] + \eta\sigma_m^2 \frac{\partial^2 M(b)}{\partial b^2} + \lambda s f(b) - \nu M(b) \quad \text{for } b > b^*,
 $${#eq-kf}
-
 where $M(b)$ is the density of married households with match quality $b$, and $s$ is the mass of single households,
 
 $$
 s = 1 - \int_{b^*}^{\infty} M(b) \, db.
 $${#eq-population-ct}
 
-**Equilibrium**
+### Equilibrium {.unnumbered}
 
 A stationary equilibrium is a tuple $\{V(b), W, s, M(b)\}$ such that
 
 1. $W$ and $V(b)$ satisfy @eq-hjb-single and @eq-hjb-married with the same marriage/divorce threshold $b^*$, and
-1. $s$ and $M(b)$ is a stationary distribution that satisfies @eq-kf with @eq-population-ct for all $b > b^*$.
+1. $s$ and $M(b)$ constitute a stationary distribution satisfying @eq-kf with @eq-population-ct for all $b > b^*$.
 

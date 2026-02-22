@@ -1,21 +1,7 @@
-\usepackage[format=plain, labelsep=colon]{caption}
-\usepackage{etoolbox}
-\makeatletter
-\patchcmd{\NAT@citex}
-  {\@citea\NAT@hyper@{%
-      \NAT@nmfmt{\NAT@nm}%
-      \hyper@natlinkbreak{\NAT@aysep\NAT@spacechar}{\@citeb\@extra@b@citeb}%
-      \NAT@date}}
-  {\@citea\NAT@nmfmt{\NAT@nm}%
-    \NAT@aysep\NAT@spacechar\NAT@hyper@{\NAT@date}}{}{}
-\patchcmd{\NAT@citex}
-  {\@citea\NAT@hyper@{%
-      \NAT@nmfmt{\NAT@nm}%
-      \hyper@natlinkbreak{\NAT@spacechar\NAT@@open\if*#1*\else#1\NAT@spacechar\fi}%
-        {\@citeb\@extra@b@citeb}%
-      \NAT@date}}
-  {\@citea\NAT@nmfmt{\NAT@nm}%
-    \NAT@spacechar\NAT@@open\if*#1*\else#1\NAT@spacechar\fi\NAT@hyper@{\NAT@date}}{}{}
-\makeatother
+\captionsetup{format=plain, labelsep=colon}
+\usepackage{bbm}
+\let\origmathbb\mathbb
+\renewcommand{\mathbb}[1]{\ifnum\pdfstrcmp{#1}{1}=0 \mathbbm{1}\else\origmathbb{#1}\fi}
 \usepackage{xcolor}
 \definecolor{coloraccent}{HTML}{107895}
+\usepackage[section]{placeins}

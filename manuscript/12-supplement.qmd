@@ -14,13 +14,12 @@ targets::tar_config_set(
 
 targets::tar_load(c(benchmark, moment))
 invisible(list2env(targets::tar_read(fn_figure), .GlobalEnv))
-showtext::showtext_auto()
 theme_set(theme_proj())
 ```
 
 ```{r}
 #| label: tbl-calibration
-#| tbl-cap: "**Calibration Targets and Fit**"
+#| tbl-cap: "Calibration Targets and Fit"
 moment |>
   mutate(
     variable = rep(

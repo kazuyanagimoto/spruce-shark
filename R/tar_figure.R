@@ -12,10 +12,10 @@ theme_proj <- function(
   font_text = "Roboto Condensed Light",
   size_base = 11
 ) {
-  ggplot2::theme_minimal(base_family = font_text, base_size = size_base) +
+  ggplot2::theme_classic(base_family = font_text, base_size = size_base) +
     ggplot2::theme(
       plot.title = ggplot2::element_text(
-        size = size_base * 1.1,
+        size = size_base,
         face = "bold",
         family = font_title
       ),
@@ -31,22 +31,7 @@ theme_proj <- function(
         family = font_text,
         margin = ggplot2::margin(t = 10)
       ),
-      panel.grid.minor = ggplot2::element_blank(),
-      strip.text = ggplot2::element_text(
-        size = size_base * 0.9,
-        hjust = 0,
-        family = font_title,
-        face = "bold"
-      ),
-      strip.background = ggplot2::element_rect(fill = "#ffffff", color = NA),
-      axis.ticks = ggplot2::element_blank(),
-      axis.title = ggplot2::element_text(
-        family = font_text,
-        face = "plain",
-        size = size_base * 0.8
-      ),
-      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 5)),
-      axis.text = ggplot2::element_text(family = font_text, face = "plain"),
+      legend.position = "none",
       legend.title = ggplot2::element_blank(),
       legend.key = ggplot2::element_blank(),
       legend.text = ggplot2::element_text(
@@ -54,21 +39,25 @@ theme_proj <- function(
         family = font_text,
         face = "plain"
       ),
-      legend.spacing = ggplot2::unit(0.1, "lines"),
-      legend.box.margin = ggplot2::margin(t = -0.5, unit = "lines"),
-      legend.margin = ggplot2::margin(t = 0),
-      legend.position = "bottom",
-      plot.title.position = "plot"
+      axis.line = ggplot2::element_line(linewidth = 0.3),
+      axis.ticks = ggplot2::element_line(linewidth = 0.3),
+      axis.title = ggplot2::element_text(
+        family = font_text,
+        face = "plain",
+        size = size_base * 0.8
+      ),
+      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 5)),
+      axis.text = ggplot2::element_text(family = font_text, face = "plain"),
+      strip.background = ggplot2::element_blank(),
+      strip.text = ggplot2::element_text(
+        size = size_base,
+        hjust = 0,
+        family = font_title,
+        face = "bold"
+      )
     )
 }
-
-library(showtext)
 
 color_accent <- "#107895"
 color_accent2 <- "#9a2515"
 color_accent3 <- "#e64173"
-
-font_base_regular <- "Roboto Condensed"
-font_base_light <- "Roboto Condensed Light"
-
-# font_add_google(font_base_regular, font_base_light)
