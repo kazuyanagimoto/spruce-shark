@@ -1,14 +1,8 @@
 ---
-title: Marriage and Divorce in Continuous Time
 format: gfm
 bibliography: references.bib
 suppress-bibliography: true
 ---
-
-[Kazuharu Yanagimoto](https://kazuyanagimoto.com/)
-
-
-## Abstract
 
 ```{r}
 #| label: setup
@@ -18,6 +12,19 @@ yaml_metadata <- rmarkdown::yaml_front_matter(here::here(
   "manuscript",
   "spruce_shark_yanagimoto.qmd"
 ))
+
+cat("# ", yaml_metadata$title, "\n\n")
+```
+
+[Kazuharu Yanagimoto](https://kazuyanagimoto.com/)
+
+
+## Abstract
+
+```{r}
+#| label: abstract
+#| echo: false
+#| output: asis
 cat(yaml_metadata$abstract)
 ```
 

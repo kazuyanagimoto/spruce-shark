@@ -1,5 +1,6 @@
-# Marriage and Divorce in Continuous Time
 
+
+# Marriage and Divorce in Continuous Time
 
 [Kazuharu Yanagimoto](https://kazuyanagimoto.com/)
 
@@ -8,7 +9,7 @@
 This paper reformulates the Greenwood and Guner (2009) marriage and
 divorce model in continuous time using the HACT methods of Achdou et al.
 (2022). Replacing the AR(1) match quality process with an
-Ornstein–Uhlenbeck process yields a tridiagonal generator, reducing the
+Ornstein-Uhlenbeck process yields a tridiagonal generator, reducing the
 computational complexity of both the value function and stationary
 distribution calculations from quadratic to linear in the number of grid
 points. The continuous-time model closely replicates the discrete-time
