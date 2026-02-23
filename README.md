@@ -1,6 +1,21 @@
 # Marriage and Divorce in Continuous Time
 
 
+[Kazuharu Yanagimoto](https://kazuyanagimoto.com/)
+
+## Abstract
+
+This paper reformulates the Greenwood and Guner (2009) marriage and
+divorce model in continuous time using the HACT methods of Achdou et al.
+(2022). Replacing the AR(1) match quality process with an
+Ornstein–Uhlenbeck process yields a tridiagonal generator, reducing the
+computational complexity of both the value function and stationary
+distribution calculations from quadratic to linear in the number of grid
+points. The continuous-time model closely replicates the discrete-time
+equilibrium across all key outcomes, including the share of married
+households, the marriage rate, and the divorce rate, while achieving
+substantial gains in computation time and memory usage.
+
 ## Replication
 
 ### Simple replication (Julia Only)
@@ -24,7 +39,7 @@
     rendering. The manuscript will be saved as
     `manuscript/spruce_shark_yanagimoto.pdf`.
 
-## Why is this project named “Spruce Shark”?
+## Why is this project named “Spruce Shark🦈”?
 
 I like Dr. Andrew Heiss’
 [idea](https://github.com/andrewheiss/testy-turtle) for a project name.
@@ -47,7 +62,7 @@ codename(seed = 260216, type = "ubuntu")
 ## Licenses
 
 **Text and figures:** All prose and images in the manuscript are
-copyright of the author. The arXiv preprint is distributed under the
-arXiv license terms.
+copyright of the author. The SSRN preprint is distributed under the SSRN
+license terms.
 
 **Code:** All code is licensed under the [MIT License](LICENSE.md).

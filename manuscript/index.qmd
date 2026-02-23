@@ -1,1 +1,11 @@
-{{< include 00-abstract.qmd >}}
+# Abstract {.unnumbered}
+
+```{r}
+#| label: setup-abstract
+#| output: asis
+yaml_metadata <- rmarkdown::yaml_front_matter(here::here(
+  "manuscript",
+  "spruce_shark_yanagimoto.qmd"
+))
+cat(yaml_metadata$abstract)
+```

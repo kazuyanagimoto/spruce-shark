@@ -1,7 +1,25 @@
 ---
 title: Marriage and Divorce in Continuous Time
 format: gfm
+bibliography: references.bib
+suppress-bibliography: true
 ---
+
+[Kazuharu Yanagimoto](https://kazuyanagimoto.com/)
+
+
+## Abstract
+
+```{r}
+#| label: setup
+#| echo: false
+#| output: asis
+yaml_metadata <- rmarkdown::yaml_front_matter(here::here(
+  "manuscript",
+  "spruce_shark_yanagimoto.qmd"
+))
+cat(yaml_metadata$abstract)
+```
 
 ## Replication
 
@@ -18,7 +36,7 @@ format: gfm
 1. Restore the R environment with `renv::restore()`
 1. Run `targets::tar_make()` to execute the full pipeline, including estimation, figure and table generation, and the manuscript rendering. The manuscript will be saved as `manuscript/spruce_shark_yanagimoto.pdf`.
 
-## Why is this project named "Spruce Shark"?
+## Why is this project named "Spruce Shark🦈"?
 
 I like Dr. Andrew Heiss' [idea](https://github.com/andrewheiss/testy-turtle) for a project name.
 So I set the seed at `260216` (the day I opened the repository), and it produces a codename "Spruce Shark".
@@ -33,6 +51,6 @@ codename(seed = 260216, type = "ubuntu")
 
 ## Licenses
 
-**Text and figures:** All prose and images in the manuscript are copyright of the author. The arXiv preprint is distributed under the arXiv license terms.
+**Text and figures:** All prose and images in the manuscript are copyright of the author. The SSRN preprint is distributed under the SSRN license terms.
 
 **Code:** All code is licensed under the [MIT License](LICENSE.md).
