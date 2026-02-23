@@ -7,13 +7,13 @@ author:
     affiliations:
     - name: Kobe University
     url: https://kazuyanagimoto.com/
-date: 2026-02-22
+date: last-modified
 date-format: full
 custom-keywords:
   - name: JEL Codes
     values: [C63, D13, J12]
   - name: Keywords
-    values: [Marriage and Divorce, Continuous Time, Search and Matching]
+    values: [Marriage, Divorce, Continuous Time, Search and Matching]
 thanks: |
     This work was supported by JSPS KAKENHI Grant Number 25K23111.
 filters:
