@@ -16,6 +16,8 @@ yaml_metadata <- rmarkdown::yaml_front_matter(here::here(
 cat("# ", yaml_metadata$title, "\n\n")
 ```
 
+[![arXiv](https://img.shields.io/badge/arXiv-2602.19798-b31b1b.svg)](https://arxiv.org/abs/2602.19798)
+
 [Kazuharu Yanagimoto](https://kazuyanagimoto.com/)
 
 
