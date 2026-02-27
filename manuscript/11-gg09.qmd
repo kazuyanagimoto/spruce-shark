@@ -1,0 +1,172 @@
+# Discrete-time Model {#sec-apdx-gg09}
+
+This appendix presents the discrete-time formulation of @greenwood2009 and its calibration.
+
+## Model
+
+The economy is populated by a continuum of infinitely-lived households. Each household has a marital status, single or married. In each period, each single meets a potential partner with a match quality $b \in \mathcal{B}$.^[This match quality $b$ is also called "bliss shock" in @greenwood2009.] They marry if the expected value of being married exceeds that of being single. Each married household receives a flow utility $b$ from the match quality, and can divorce at any time. The match quality evolves stochastically over time, and households make their decisions based on the current match quality and the expected future values. At the end of each period, households exit the economy with probability $\delta$, and new households (whose mass is $\delta$) enter the economy as singles.
+
+### Household Allocation{.unnumbered}
+
+Let $z \in \{1, 2\}$ denote the number of adults in the household, i.e., $z = 1$ for singles and $z = 2$ for married household. Each household is endowed with $z$ units of time, which can be allocated to market work $l$ and home hours $h$. Households obtain utility from consumption $c$ and home production $n$, which is a composite good from home goods $d$ and home hours $h$. The household's problem is given by
+
+$$
+\max_{c, d, h} \alpha \log \left(\frac{c - \overline{c}}{z^\phi}\right) + \frac{1-\alpha}{\zeta} \left(\frac{n}{z^{\phi}}\right)^{\zeta}
+$${#eq-utility-dt}
+subject to
+
+$$
+\begin{aligned}
+c + wpd &= w(z-h) \\
+n & = \left(\theta d^{\kappa} + (1-\theta)h^{\kappa}\right)^{\frac{1}{\kappa}},
+\end{aligned}
+$$
+where $w$ is the wage rate and $p$ is the price of home goods (relative to the wage). The parameter $\overline{c}$ is the minimum consumption level, and $\phi$ captures the scale effect of household size on utility. The parameter $\kappa$ captures the substitutability between home goods and home hours in home production, and $\theta$ is the share of home goods in home production. The indirect utility function of @eq-utility-dt is denoted by $v(p, w, z)$.
+
+### Match Quality {.unnumbered}
+
+Single households meet potential partners with match quality $b$ drawn from a normal distribution:
+
+$$
+b \sim \mathcal{N}(\mu_s, \sigma_s^2),
+$${#eq-dist-match-single-dt}
+where $\mu_s$ and $\sigma_s^2$ are the mean and variance of the match quality of singles. The cumulative distribution function of the match quality of singles is denoted by $F(b)$. The match quality of married households evolves according to an AR(1) process:
+
+$$
+b = (1-\varrho)\mu_m + \varrho b_{-1} + \sigma_{m}\sqrt{1-\varrho^2}\xi, \quad \xi \sim \mathcal{N}(0, 1).
+$${#eq-ar1}
+The cumulative distribution function of the match quality of married households is denoted by $G(b'|b)$.
+
+### Value Functions {.unnumbered}
+
+The value functions of married and single households, denoted by $V(b)$ and $W$, are given by
+
+$$
+\begin{aligned}
+V(b) &= v(p, w, 2) + b + \beta \int_{\mathcal{B}} \max\{V(b'), W\} \,dG(b'|b), \\
+W &= v(p, w, 1) + \beta \int_{\mathcal{B}} \max\{V(b), W\} \,dF(b).
+\end{aligned}
+$${#eq-bellman-dt}
+
+The effective discount rate $\beta := \tilde{\beta} (1 - \delta)$ is the product of the discount factor $\tilde{\beta}$ and the survival probability $1 - \delta$. The household chooses to marry if $V(b) \geq W$ and remains single otherwise. Married households choose to divorce if $V(b) < W$ and remain married otherwise.
+
+### Stationary Distribution {.unnumbered}
+
+Let $s_{-1}$ and $M_{-1}(b)$ be the density of singles and married households with match quality $b$ in the previous period. Then, the density of singles and married households with match quality $b$ in the current period, denoted by $s$ and $M(b)$, are given by
+
+$$
+\begin{aligned}
+s &= \delta + (1-\delta)s_{-1}\int_{\mathcal{B}} \mathbb{1}\left\{V(b) < W\right\} \,dF(b)\\
+& + (1-\delta)(1-s_{-1})\int_{\mathcal{B}}\int_{\mathcal{B}}^{b} \mathbb{1}\left\{V(b') < W\right\} \,dG(b'|b_{-1})\,dM_{-1}(b_{-1}),\\
+M(b) &= (1-\delta)s_{-1}\int_{\mathcal{B}}^{b} \mathbb{1}\left\{V(b') \geq W\right\} \,dF(b')\\
+& + (1-\delta)(1-s_{-1})\int_{\mathcal{B}}\int_{\mathcal{B}}^{b}\mathbb{1}\left\{V(b') \geq W\right\} \,dG(b'|b_{-1})\,dM_{-1}(b_{-1}).
+\end{aligned}
+$${#eq-stationary-dt}
+
+The stationary distribution is the fixed point of @eq-stationary-dt, i.e., $s = s_{-1}$ and $M(b) = M_{-1}(b)$ for all $b \in \mathcal{B}$.
+
+### Equilibrium {.unnumbered}
+
+To close the model, the production side is defined as a linear technology, $y = wl$. The price of home goods $p$ is exogenously given. A stationary equilibrium is a tuple $\{V(b), W, s, M(b)\}$ such that
+
+1. $V(b)$ and $W$ satisfy @eq-bellman-dt
+1. $s$ and $M(b)$ constitute a stationary distribution satisfying @eq-stationary-dt with $s = s_{-1}$ and $M(b) = M_{-1}(b)$ for all $b \in \mathcal{B}$.
+
+## Calibration {#sec-apdx-gg09-calibration}
+
+```{r}
+#| label: setup-gg09
+library(tinytable)
+library(dplyr)
+library(ggplot2)
+options(tinytable_html_mathjax = TRUE)
+
+targets::tar_config_set(
+  store = here::here("_targets"),
+  script = here::here("_targets.R")
+)
+
+targets::tar_load(c(benchmark, ct, moment))
+invisible(list2env(targets::tar_read(fn_figure), .GlobalEnv))
+theme_set(theme_proj())
+```
+
+I use the parameter values in @greenwood2009, summarized in @tbl-params-gg09. Some parameters are set from a priori information: $\tilde{\beta} = 0.96$ (convention), $\phi = 0.766$ (OECD equivalence scale), $\theta = 0.206$ and $\kappa = 0.189$ [@mcgrattan1997], and $1/\delta = 47$ (marriageable life span, ages 18--64). The wage $w_{1950}$ is normalized to 1, with a growth rate $\Delta w = 0.022$ matching the real wage trend from the data. The remaining ten parameters, taste parameters $(\alpha, \zeta, \bar{c})$, price parameters $(p_{1950}, \Delta p)$, and match quality parameters $(\mu_s, \sigma_s, \mu_m, \sigma_m, \varrho)$, are jointly estimated by minimum distance, targeting 16 data observations across five dimensions: time allocations for married and single households (1950--1990), the fraction married, divorce rate, and marriage rate (1950 and 2000). Importantly, the match quality parameters do not enter the labor supply functions, so they are effectively identified from the vital statistics targets alone.
+
+```{r}
+#| label: tbl-params-gg09
+#| tbl-cap: "Parameter Values in @greenwood2009"
+data.frame(
+  tmp = c(
+    "Tastes",
+    "",
+    " Technology",
+    "Life span",
+    "Shocks",
+    "",
+    "Prices",
+    "Wages"
+  ),
+  par = c(
+    "$\\tilde{\\beta}=0.96, \\phi=0.766$",
+    "$\\alpha = 0.278, \\zeta = -1.901, \\overline{c} = 0.131$",
+    "$\\theta = 0.206, \\kappa = 0.189$",
+    "$1/\\delta=47$",
+    "$\\mu_s = -4.252, \\sigma_s^2 = 8.063$",
+    "$\\mu_m = 0.521, \\sigma_m^2 = 0.680, \\varrho = 0.896$",
+    "$p_{1950} = 9.959, \\Delta p = 0.059$",
+    "$w_{1950} = 1.000, \\Delta w = 0.022$"
+  ),
+  desc = c(
+    "Literature",
+    "Estimated",
+    "Literature",
+    "Settings",
+    "Estimated",
+    "Estimated",
+    "Estimated",
+    "Data"
+  )
+) |>
+  setNames(c(" ", "Parameter", "Description")) |>
+  tt() |>
+  style_tt(align = "l")
+```
+
+As discussed in @sec-estimation, the continuous-time OU parameters $(\mu_m, \sigma_m, \eta)$ are re-estimated by minimum distance to match the same calibration targets. @tbl-calibration compares the resulting fit of both the discrete- and continuous-time models.
+
+```{r}
+#| label: tbl-calibration
+#| tbl-cap: "Calibration Targets and Fit"
+moment |>
+  mutate(
+    variable = rep(
+      c("Frac. married", "Prob. divorce", "Prob. marriage"),
+      each = 2
+    ),
+    year = rep(c("1950", "2000"), 3)
+  ) |>
+  tidyr::pivot_wider(
+    id_cols = variable,
+    names_from = year,
+    values_from = c(data, model_ct, model_dt),
+    names_glue = "{year}_{.value}"
+  ) |>
+  select(
+    variable,
+    `1950_data`,
+    `1950_model_ct`,
+    `1950_model_dt`,
+    `2000_data`,
+    `2000_model_ct`,
+    `2000_model_dt`
+  ) |>
+  setNames(c(" ", "Data", "CT", "DT", "Data", "CT", "DT")) |>
+  tt(
+    notes = "Notes: Data targets are from Greenwood and Guner (2009, Table 3). DT: discrete-time model solved by VFI with the Tauchen transition matrix. CT: continuous-time model solved via the HJB variational inequality and KFE. The CT match quality parameters are re-estimated to match the data targets; all other parameters are shared.",
+    width = c(0.2, rep(0.1, 6))
+  ) |>
+  format_tt(j = 2:7, digits = 2) |>
+  style_tt(align = "lcccccc") |>
+  group_tt(j = list("1950" = 2:4, "2000" = 5:7))
+```

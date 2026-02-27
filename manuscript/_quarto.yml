@@ -18,8 +18,8 @@ book:
     - 03-estimation.qmd
     - 04-conclusion.qmd
   appendices:
-    - 11-detail-comp.qmd
-    - 12-supplement.qmd
+    - 11-gg09.qmd
+    - 12-detail-comp.qmd
     - references.qmd
 
 bibliography: references.bib

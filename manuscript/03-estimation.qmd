@@ -21,51 +21,7 @@ theme_set(theme_proj())
 
 ## Calibration
 
-For calibration, I use the parameter values in @greenwood2009, summarized in @tbl-params-gg09. Some parameters are set from a priori information: $\tilde{\beta} = 0.96$ (convention), $\phi = 0.766$ (OECD equivalence scale), $\theta = 0.206$ and $\kappa = 0.189$ [@mcgrattan1997], and $1/\delta = 47$ (marriageable life span, ages 18--64). The wage $w_{1950}$ is normalized to 1, with a growth rate $\Delta w = 0.022$ matching the real wage trend from the data. The remaining ten parameters, taste parameters $(\alpha, \zeta, \bar{c})$, price parameters $(p_{1950}, \Delta p)$, and match quality parameters $(\mu_s, \sigma_s, \mu_m, \sigma_m, \varrho)$, are jointly estimated by minimum distance, targeting 16 data observations across five dimensions: time allocations for married and single households (1950--1990), the fraction married, divorce rate, and marriage rate (1950 and 2000). Importantly, the match quality parameters do not enter the labor supply functions, so they are effectively identified from the vital statistics targets alone.
-
-```{r}
-#| label: tbl-params-gg09
-#| tbl-cap: "Parameter Values in @greenwood2009"
-data.frame(
-  tmp = c(
-    "Tastes",
-    "",
-    " Technology",
-    "Life span",
-    "Shocks",
-    "",
-    "Prices",
-    "Wages"
-  ),
-  par = c(
-    "$\\tilde{\\beta}=0.96, \\phi=0.766$",
-    "$\\alpha = 0.278, \\zeta = -1.901, \\overline{c} = 0.131$",
-    "$\\theta = 0.206, \\kappa = 0.189$",
-    "$1/\\delta=47$",
-    "$\\mu_s = -4.252, \\sigma_s^2 = 8.063$",
-    "$\\mu_m = 0.521, \\sigma_m^2 = 0.680, \\varrho = 0.896$",
-    "$p_{1950} = 9.959, \\Delta p = 0.059$",
-    "$w_{1950} = 1.000, \\Delta w = 0.022$"
-  ),
-  desc = c(
-    "Literature",
-    "Estimated",
-    "Literature",
-    "Settings",
-    "Estimated",
-    "Estimated",
-    "Estimated",
-    "Data"
-  )
-) |>
-  setNames(c(" ", "Parameter", "Description")) |>
-  tt() |>
-  style_tt(align = "l")
-```
-
-### Continuous-time Specific Parameters {.unnumbered}
-
-The exit rate $\nu$ and the discount rate $\tilde{\rho}$ are obtained from their discrete-time counterparts via the standard mapping $\nu = -\log(1-\delta)/\Delta t$ and $\tilde{\rho} = -\log(\tilde{\beta})/\Delta t$, giving the effective discount rate $\rho = \tilde{\rho} + \nu$. I set the Poisson arrival rate $\lambda = 1$ and the model period length $\Delta t = 1$ for the continuous-time model. This choice corresponds exactly to the discrete-time assumption that each single meets one potential partner per period, since the expected number of Poisson arrivals in an interval of length $\Delta t$ is $\lambda\,\Delta t = 1$. Moreover, the HJB equations depend on rates only through their ratios, so the level of $\lambda$ is not separately identified; what matters is the product $\lambda\,\Delta t$. Setting $\lambda = 1/\Delta t$ fixes this product at unity for any $\Delta t$, making the choice of period length immaterial.
+I adopt the parameter values of @greenwood2009 (see @sec-apdx-gg09-calibration for details). The exit rate $\nu$ and the discount rate $\tilde{\rho}$ are obtained from their discrete-time counterparts via the standard mapping $\nu = -\log(1-\delta)/\Delta t$ and $\tilde{\rho} = -\log(\tilde{\beta})/\Delta t$, giving the effective discount rate $\rho = \tilde{\rho} + \nu$. I set the Poisson arrival rate $\lambda = 1$ and the model period length $\Delta t = 1$ for the continuous-time model. This choice corresponds exactly to the discrete-time assumption that each single meets one potential partner per period, since the expected number of Poisson arrivals in an interval of length $\Delta t$ is $\lambda\,\Delta t = 1$. Moreover, the HJB equations depend on rates only through their ratios, so the level of $\lambda$ is not separately identified; what matters is the product $\lambda\,\Delta t$. Setting $\lambda = 1/\Delta t$ fixes this product at unity for any $\Delta t$, making the choice of period length immaterial.
 
 The continuous-time method requires additional parameters for the OU process. A naive approach is to set the parameters of the OU process to match the mean and variance of the AR(1) process. However, this approach does not work well in practice because of the *continuous monitoring problem*. In the discrete-time model, the divorce decision is evaluated only once per period: even if the match quality dips below the threshold within the period, the couple remains married as long as the realized end-of-period quality exceeds the threshold. In continuous time, by contrast, the value function is monitored at every instant, so the process can trigger divorce the moment it crosses the threshold, an event that occurs with strictly higher probability. As a result, naively matching the OU parameters $(\mu_m, \sigma_m, \eta)$ to the AR(1) parameters $(\mu_m, \sigma_m, \varrho)$ via the standard mapping $\eta = -\log(\varrho)/\Delta t$ systematically overstates the divorce rate in the continuous-time formulation.
 
